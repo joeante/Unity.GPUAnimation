@@ -2,5 +2,8 @@
 *.idea
 GPUAnimationExamples/Library
 GPUAnimationExamples/Temp
+GPUAnimationExamples/Logs
+GPUAnimationExamples/obj
 *.sln
 *.csproj
+*.DS_Store
