@@ -181,7 +181,6 @@ Shader "Skinning Standard"
 				float4x4 secondBoneMatrix = secondBoneMatrix0 * (1 - animationTextureCoords.z) + secondBoneMatrix1 * animationTextureCoords.z;
 
 				float4x4 combinedMatrix = firstBoneMatrix * v.boneInfluences.x + secondBoneMatrix * v.boneInfluences.y;
-				//float4x4 combinedMatrix = firstBoneMatrix0;
 
 				float4 skinnedVertex = mul(combinedMatrix, v.vertex);
 					

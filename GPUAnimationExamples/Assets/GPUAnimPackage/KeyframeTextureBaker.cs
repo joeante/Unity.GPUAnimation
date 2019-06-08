@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Object = System.Object;
 
 public static class KeyframeTextureBaker
 {
@@ -26,14 +27,23 @@ public static class KeyframeTextureBaker
 		public int PixelEnd;
 	}
 
-	public static BakedData BakeClips(SkinnedMeshRenderer originalRenderer, AnimationClip[] animationClips, LodData lods)
+	public static BakedData BakeClips(GameObject animationRoot, AnimationClip[] animationClips, LodData lods)
 	{
-		BakedData bakedData = new BakedData();
+		var skinRenderers = animationRoot.GetComponentsInChildren<SkinnedMeshRenderer>();
+		if (skinRenderers.Length != 1)
+			throw new System.ArgumentException("There must be exactly one SkinnedMeshRenderer");
 
-		bakedData.NewMesh = CreateMesh(originalRenderer);
-		var lod1Mesh = CreateMesh(originalRenderer, lods.Lod1Mesh);
-		var lod2Mesh = CreateMesh(originalRenderer, lods.Lod2Mesh);
-		var lod3Mesh = CreateMesh(originalRenderer, lods.Lod3Mesh);
+		// @TODO: warning about more than one materials
+
+		var instance = GameObject.Instantiate(animationRoot, Vector3.zero, Quaternion.identity);
+		instance.transform.localScale = Vector3.one;
+		var skinRenderer = instance.GetComponentInChildren<SkinnedMeshRenderer>();
+
+		BakedData bakedData = new BakedData();
+		bakedData.NewMesh = CreateMesh(skinRenderer);
+		var lod1Mesh = CreateMesh(skinRenderer, lods.Lod1Mesh);
+		var lod2Mesh = CreateMesh(skinRenderer, lods.Lod2Mesh);
+		var lod3Mesh = CreateMesh(skinRenderer, lods.Lod3Mesh);
 		bakedData.lods = new LodData(lod1Mesh, lod2Mesh, lod3Mesh, lods.Lod1Distance, lods.Lod2Distance, lods.Lod3Distance);
 
 		bakedData.Framerate = 60f;
@@ -44,7 +54,7 @@ public static class KeyframeTextureBaker
 
 		for (int i = 0; i < animationClips.Length; i++)
 		{
-			var sampledMatrix = SampleAnimationClip(animationClips[i], originalRenderer, bakedData.Framerate);
+			var sampledMatrix = SampleAnimationClip(instance, animationClips[i], skinRenderer, bakedData.Framerate);
 			sampledBoneMatrices.Add(sampledMatrix);
 
 			numberOfKeyFrames += sampledMatrix.GetLength(0);
@@ -165,6 +175,8 @@ public static class KeyframeTextureBaker
 		{
 			bakedData.AnimationsDictionary[clipData.Clip.name] = clipData;
 		}
+		
+		GameObject.DestroyImmediate(instance);
 
 		return bakedData;
 	}
@@ -215,6 +227,7 @@ public static class KeyframeTextureBaker
 
 		Vector3[] scaledVertices = new Vector3[originalMesh.vertexCount];
 
+		var bones = originalRenderer.bones;
 		for (int i = 0; i < originalMesh.vertexCount; i++)
 		{
 			//scaledVertices[i] = vertices[i] * scale;
@@ -228,7 +241,7 @@ public static class KeyframeTextureBaker
 				boneIndex1 = boneRemapping[boneIndex1];
 			}
 
-			boneIds[i] = new Vector2((boneIndex0 + 0.5f) / originalRenderer.bones.Length, (boneIndex1 + 0.5f) / originalRenderer.bones.Length);
+			boneIds[i] = new Vector2((boneIndex0 + 0.5f) / bones.Length, (boneIndex1 + 0.5f) / bones.Length);
 
 			float mostInfluentialBonesWeight = boneWeights[i].weight0 + boneWeights[i].weight1;
 
@@ -242,14 +255,11 @@ public static class KeyframeTextureBaker
 		return newMesh;
 	}
 
-	private static Matrix4x4[,] SampleAnimationClip(AnimationClip clip, SkinnedMeshRenderer renderer, float framerate)
+	private static Matrix4x4[,] SampleAnimationClip(GameObject root, AnimationClip clip, SkinnedMeshRenderer renderer, float framerate)
 	{
-		Matrix4x4[,] boneMatrices = new Matrix4x4[Mathf.CeilToInt(framerate * clip.length) + 3, renderer.bones.Length];
-
-		//@TODO: Pass root explicitly
-		Animation animation = renderer.GetComponentInParent<Animation>();
-		GameObject root = animation.gameObject;
-		
+		var bindPoses = renderer.sharedMesh.bindposes;
+		var bones = renderer.bones;
+		Matrix4x4[,] boneMatrices = new Matrix4x4[Mathf.CeilToInt(framerate * clip.length) + 3, bones.Length];
 		for (int i = 1; i < boneMatrices.GetLength(0) - 1; i++)
 		{
 			float t = (float)(i - 1) / (boneMatrices.GetLength(0) - 3);
@@ -259,17 +269,14 @@ public static class KeyframeTextureBaker
 			clip.SampleAnimation(root, t * clip.length);
 			clip.wrapMode = oldWrapMode;
 			
-			for (int j = 0; j < renderer.bones.Length; j++)
-			{
-				boneMatrices[i, j] = renderer.bones[j].localToWorldMatrix * renderer.sharedMesh.bindposes[j];
-			}
+			for (int j = 0; j < bones.Length; j++)
+				boneMatrices[i, j] = bones[j].localToWorldMatrix * bindPoses[j];
 		}
 
 		for (int j = 0; j < renderer.bones.Length; j++)
 		{
 			boneMatrices[0, j] = boneMatrices[boneMatrices.GetLength(0) - 2, j];
 			boneMatrices[boneMatrices.GetLength(0) - 1, j] = boneMatrices[1, j];
-
 		}
 
 		return boneMatrices;
