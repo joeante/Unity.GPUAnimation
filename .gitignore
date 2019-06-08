@@ -1,0 +1,6 @@
+
+*.idea
+GPUAnimationExamples/Library
+GPUAnimationExamples/Temp
+*.sln
+*.csproj
