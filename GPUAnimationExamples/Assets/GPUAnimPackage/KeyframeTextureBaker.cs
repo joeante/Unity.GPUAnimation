@@ -131,14 +131,8 @@ public static class KeyframeTextureBaker
 		}
 
 		bakedData.Texture0.SetPixels(texture0Color);
-		bakedData.Texture0.Apply(false, false);
-
 		bakedData.Texture1.SetPixels(texture1Color);
-		bakedData.Texture1.Apply(false, false);
-
 		bakedData.Texture2.SetPixels(texture2Color);
-		bakedData.Texture2.Apply(false, false);
-
 
 		runningTotalNumberOfKeyframes = 0;
 		for (int i = 0; i < sampledBoneMatrices.Count; i++)
@@ -170,6 +164,10 @@ public static class KeyframeTextureBaker
 			runningTotalNumberOfKeyframes += sampledBoneMatrices[i].GetLength(0);
 		}
 
+		bakedData.Texture0.Apply(false, true);
+		bakedData.Texture1.Apply(false, true);
+		bakedData.Texture2.Apply(false, true);
+		
 		bakedData.AnimationsDictionary = new Dictionary<string, AnimationClipData>();
 		foreach (var clipData in bakedData.Animations)
 		{
@@ -224,14 +222,10 @@ public static class KeyframeTextureBaker
 				}
 			}
 		}
-
-		Vector3[] scaledVertices = new Vector3[originalMesh.vertexCount];
-
+		
 		var bones = originalRenderer.bones;
 		for (int i = 0; i < originalMesh.vertexCount; i++)
 		{
-			//scaledVertices[i] = vertices[i] * scale;
-			scaledVertices[i] = vertices[i];
 			int boneIndex0 = boneWeights[i].boneIndex0;
 			int boneIndex1 = boneWeights[i].boneIndex1;
 
@@ -248,7 +242,7 @@ public static class KeyframeTextureBaker
 			boneInfluences[i] = new Vector2(boneWeights[i].weight0 / mostInfluentialBonesWeight, boneWeights[i].weight1 / mostInfluentialBonesWeight);
 		}
 
-		newMesh.vertices = scaledVertices;
+		newMesh.vertices = vertices;
 		newMesh.uv2 = boneIds;
 		newMesh.uv3 = boneInfluences;
 
@@ -273,7 +267,7 @@ public static class KeyframeTextureBaker
 				boneMatrices[i, j] = bones[j].localToWorldMatrix * bindPoses[j];
 		}
 
-		for (int j = 0; j < renderer.bones.Length; j++)
+		for (int j = 0; j < bones.Length; j++)
 		{
 			boneMatrices[0, j] = boneMatrices[boneMatrices.GetLength(0) - 2, j];
 			boneMatrices[boneMatrices.GetLength(0) - 1, j] = boneMatrices[1, j];

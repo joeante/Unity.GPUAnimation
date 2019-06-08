@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+using Object = System.Object;
 
 namespace GPUAnimPackage
 {
@@ -16,12 +17,10 @@ namespace GPUAnimPackage
         private readonly uint[] indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
         private ComputeBuffer textureCoordinatesBuffer;
-        private ComputeBuffer objectRotationsBuffer;
-        private ComputeBuffer objectPositionsBuffer;
+        private ComputeBuffer objectToWorldBuffer;
 
         public NativeList<float3> TextureCoordinates;
-        public NativeList<float4> ObjectPositions;
-        public NativeList<quaternion> ObjectRotations;
+        public NativeList<float4x4> ObjectToWorld;
 
 
         private Material material;
@@ -42,17 +41,14 @@ namespace GPUAnimPackage
             indirectArgs[1] = (uint)0;
             argsBuffer.SetData(indirectArgs);
 
-            objectRotationsBuffer = new ComputeBuffer(PreallocatedBufferSize, 16);
-            objectPositionsBuffer = new ComputeBuffer(PreallocatedBufferSize, 16);
-            textureCoordinatesBuffer = new ComputeBuffer(PreallocatedBufferSize, 12);
+            objectToWorldBuffer = new ComputeBuffer(PreallocatedBufferSize, 16 * sizeof(float));
+            textureCoordinatesBuffer = new ComputeBuffer(PreallocatedBufferSize, 3 * sizeof(float));
 
+            ObjectToWorld = new NativeList<float4x4>(PreallocatedBufferSize, Allocator.Persistent);
             TextureCoordinates = new NativeList<float3>(PreallocatedBufferSize, Allocator.Persistent);
-            ObjectPositions = new NativeList<float4>(PreallocatedBufferSize, Allocator.Persistent);
-            ObjectRotations = new NativeList<quaternion>(PreallocatedBufferSize, Allocator.Persistent);
 		
             material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
-            material.SetBuffer("objectPositionsBuffer", objectPositionsBuffer);
-            material.SetBuffer("objectRotationsBuffer", objectRotationsBuffer);
+            material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
             material.SetTexture("_AnimationTexture0", bakedData.Texture0);
             material.SetTexture("_AnimationTexture1", bakedData.Texture1);
             material.SetTexture("_AnimationTexture2", bakedData.Texture2);
@@ -63,11 +59,9 @@ namespace GPUAnimPackage
             UnityEngine.Object.DestroyImmediate(material);
 		
             if (argsBuffer != null) argsBuffer.Dispose();
-            if (objectPositionsBuffer != null) objectPositionsBuffer.Dispose();
-            if (ObjectPositions.IsCreated) ObjectPositions.Dispose();
 
-            if (objectRotationsBuffer != null) objectRotationsBuffer.Dispose();
-            if (ObjectRotations.IsCreated) ObjectRotations.Dispose();
+            if (objectToWorldBuffer != null) objectToWorldBuffer.Dispose();
+            if (ObjectToWorld.IsCreated) ObjectToWorld.Dispose();
 
             if (textureCoordinatesBuffer != null) textureCoordinatesBuffer.Dispose();
             if (TextureCoordinates.IsCreated) TextureCoordinates.Dispose();
@@ -75,7 +69,8 @@ namespace GPUAnimPackage
 
         public void Draw()
         {
-            if (objectRotationsBuffer == null) return;
+            if (objectToWorldBuffer == null)
+                return;
 
             int count = UnitToDrawCount;
             if (count == 0) return;
@@ -84,13 +79,11 @@ namespace GPUAnimPackage
 
             Profiler.BeginSample("Shader set data");
 
-            objectPositionsBuffer.SetData((NativeArray<float4>)ObjectPositions, 0, 0, count);
-            objectRotationsBuffer.SetData((NativeArray<quaternion>)ObjectRotations, 0, 0, count);
+            objectToWorldBuffer.SetData((NativeArray<float4x4>)ObjectToWorld, 0, 0, count);
             textureCoordinatesBuffer.SetData((NativeArray<float3>)TextureCoordinates, 0, 0, count);
 
             material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
-            material.SetBuffer("objectPositionsBuffer", objectPositionsBuffer);
-            material.SetBuffer("objectRotationsBuffer", objectRotationsBuffer);
+            material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
             material.SetTexture("_AnimationTexture0", bakedData.Texture0);
             material.SetTexture("_AnimationTexture1", bakedData.Texture1);
             material.SetTexture("_AnimationTexture2", bakedData.Texture2);
@@ -112,7 +105,7 @@ namespace GPUAnimPackage
         {
             get
             {
-                return ObjectPositions.Length;
+                return ObjectToWorld.Length;
             }
         }
     }

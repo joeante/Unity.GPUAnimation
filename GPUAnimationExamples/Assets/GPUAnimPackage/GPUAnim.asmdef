@@ -2,10 +2,16 @@
     "name": "GPUAnim",
     "references": [
         "Unity.Mathematics",
-		"Unity.Collections"
+        "Unity.Collections",
+        "Unity.Entities"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": true
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

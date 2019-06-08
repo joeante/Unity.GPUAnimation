@@ -1,9 +1,18 @@
 ﻿using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace GPUAnimPackage
 {
+	/*
+	struct AnimationState : IComponentData
+	{
+		public float NormalizedTime;
+		public int   AnimationClipIndex;
+	}
+	*/
+
 	public class ConvertCharacter : MonoBehaviour
 	{
 		public Material Material;
@@ -52,8 +61,6 @@ namespace GPUAnimPackage
 			offset = start;
 		}
 		
-		
-		
 		void OnEnable ()
 		{
 			var renderer = CharacterRig.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -81,7 +88,6 @@ namespace GPUAnimPackage
 				ClipDataBaked[i] = data;
 			}
 			
-			
 			drawer = new InstancedSkinningDrawer(Material, baked.NewMesh, baked);
 		}
 
@@ -93,19 +99,14 @@ namespace GPUAnimPackage
 
 		void LateUpdate()
 		{
-			drawer.ObjectPositions.Clear();
-			drawer.ObjectRotations.Clear();
 			drawer.TextureCoordinates.Clear();
-
-			drawer.ObjectPositions.Add(new float4(transform.position, transform.lossyScale.x));
-			drawer.ObjectRotations.Add(transform.rotation);
+			drawer.ObjectToWorld.Clear();
 			
-			float clipLength = Clips[animationIndex].length;
 			var clipData = ClipDataBaked[animationIndex];
-			
-			float normalizedTimeClip = Mathf.Repeat(Time.time, clipLength) / clipLength;
+			float normalizedTimeClip = Mathf.Repeat(Time.time, clipData.AnimationLength) / clipData.AnimationLength;
 			
 			drawer.TextureCoordinates.Add(clipData.ComputeCoordinate(normalizedTimeClip));
+			drawer.ObjectToWorld.Add(transform.localToWorldMatrix);
 
 			drawer.Draw();
 		}

@@ -100,10 +100,8 @@ Shader "Skinning Standard"
 
 
 	#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-			//StructuredBuffer<float4x4> objectToWorldBuffer;
-			StructuredBuffer<float4> objectPositionsBuffer;
-			StructuredBuffer<float4> objectRotationsBuffer;
-			StructuredBuffer<float3> textureCoordinatesBuffer;
+			StructuredBuffer<float4x4> objectToWorldBuffer;
+			StructuredBuffer<float3>   textureCoordinatesBuffer;
 	#endif
 
 			void setup()
@@ -180,13 +178,9 @@ Shader "Skinning Standard"
 				float4x4 secondBoneMatrix1 = CreateMatrix(animationTextureCoords.y, v.boneIds.y);
 				float4x4 secondBoneMatrix = secondBoneMatrix0 * (1 - animationTextureCoords.z) + secondBoneMatrix1 * animationTextureCoords.z;
 
-				float4x4 combinedMatrix = firstBoneMatrix * v.boneInfluences.x + secondBoneMatrix * v.boneInfluences.y;
+				float4x4 combinedMatrix = mul(objectToWorldBuffer[unity_InstanceID], firstBoneMatrix * v.boneInfluences.x + secondBoneMatrix * v.boneInfluences.y);
 
-				float4 skinnedVertex = mul(combinedMatrix, v.vertex);
-					
-				skinnedVertex *= objectPositionsBuffer[unity_InstanceID].w;
-				float4 posWorld = QuaternionMul(skinnedVertex, objectRotationsBuffer[unity_InstanceID]);
-				posWorld.xyz = posWorld + objectPositionsBuffer[unity_InstanceID].xyz;
+				float4 posWorld = mul(combinedMatrix, v.vertex);
 
 	#if UNITY_REQUIRE_FRAG_WORLDPOS
 	#if UNITY_PACK_WORLDPOS_WITH_TANGENT
@@ -202,9 +196,7 @@ Shader "Skinning Standard"
 				o.tex = TexCoordsSkin(v);
 				o.eyeVec = NormalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
 
-				float3 normalSkinningRotated = mul(combinedMatrix, float4(v.normal.xyz, 0));
-
-				float3 normalWorld = QuaternionMul(float4(normalSkinningRotated, 1), objectRotationsBuffer[unity_InstanceID]);
+				float3 normalWorld = mul(combinedMatrix, float4(v.normal.xyz, 0));
 
 	#ifdef _TANGENT_TO_WORLD
 				float4 tangentWorld = float4(mul(combinedMatrix, float4(v.tangent.xyz, 0)).xyz, v.tangent.w);
