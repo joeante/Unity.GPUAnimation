@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public static class KeyframeTextureBaker
@@ -29,23 +30,17 @@ public static class KeyframeTextureBaker
 	{
 		BakedData bakedData = new BakedData();
 
-		bakedData.NewMesh = CreateMesh(originalRenderer, lods.Scale);
-		var lod1Mesh = CreateMesh(originalRenderer, lods.Scale, lods.Lod1Mesh);
-		var lod2Mesh = CreateMesh(originalRenderer, lods.Scale, lods.Lod2Mesh);
-		var lod3Mesh = CreateMesh(originalRenderer, lods.Scale, lods.Lod3Mesh);
+		bakedData.NewMesh = CreateMesh(originalRenderer);
+		var lod1Mesh = CreateMesh(originalRenderer, lods.Lod1Mesh);
+		var lod2Mesh = CreateMesh(originalRenderer, lods.Lod2Mesh);
+		var lod3Mesh = CreateMesh(originalRenderer, lods.Lod3Mesh);
 		bakedData.lods = new LodData(lod1Mesh, lod2Mesh, lod3Mesh, lods.Lod1Distance, lods.Lod2Distance, lods.Lod3Distance);
 
 		bakedData.Framerate = 60f;
 
-		List<Matrix4x4[,]> sampledBoneMatrices = new List<Matrix4x4[,]>();
+		var sampledBoneMatrices = new List<Matrix4x4[,]>();
 
 		int numberOfKeyFrames = 0;
-		var animationComponent = originalRenderer.GetComponentInParent<Animation>();
-		for (int i = 0; i < animationClips.Length; i++)
-		{
-			animationComponent[animationClips[i].name].enabled = false;
-			animationComponent[animationClips[i].name].weight = 0f;
-		}
 
 		for (int i = 0; i < animationClips.Length; i++)
 		{
@@ -184,7 +179,7 @@ public static class KeyframeTextureBaker
 		return "(" + v.r + ", " + v.g + ", " + v.b + ", " + v.a + ")";
 	}
 
-	private static Mesh CreateMesh(SkinnedMeshRenderer originalRenderer, float scale, Mesh mesh = null)
+	private static Mesh CreateMesh(SkinnedMeshRenderer originalRenderer, Mesh mesh = null)
 	{
 		Mesh newMesh = new Mesh();
 		Mesh originalMesh = mesh == null ? originalRenderer.sharedMesh : mesh;
@@ -251,23 +246,22 @@ public static class KeyframeTextureBaker
 	{
 		Matrix4x4[,] boneMatrices = new Matrix4x4[Mathf.CeilToInt(framerate * clip.length) + 3, renderer.bones.Length];
 
+		//@TODO: Pass root explicitly
 		Animation animation = renderer.GetComponentInParent<Animation>();
-		AnimationState bakingState = animation[clip.name];
-		bakingState.enabled = true;
-		bakingState.weight = 1f;
-
+		GameObject root = animation.gameObject;
+		
 		for (int i = 1; i < boneMatrices.GetLength(0) - 1; i++)
 		{
 			float t = (float)(i - 1) / (boneMatrices.GetLength(0) - 3);
 
-			bakingState.normalizedTime = t;
-			animation.Sample();
-
+			var oldWrapMode = clip.wrapMode;
+			clip.wrapMode = WrapMode.Clamp;
+			clip.SampleAnimation(root, t * clip.length);
+			clip.wrapMode = oldWrapMode;
+			
 			for (int j = 0; j < renderer.bones.Length; j++)
 			{
-				// Put it into model space for better compression.
-				boneMatrices[i, j] = renderer.localToWorldMatrix.inverse * renderer.bones[j].localToWorldMatrix * renderer.sharedMesh.bindposes[j];
-				//boneMatrices[i, j] = renderer.bones[j].localToWorldMatrix;
+				boneMatrices[i, j] = renderer.bones[j].localToWorldMatrix * renderer.sharedMesh.bindposes[j];
 			}
 		}
 
@@ -277,9 +271,6 @@ public static class KeyframeTextureBaker
 			boneMatrices[boneMatrices.GetLength(0) - 1, j] = boneMatrices[1, j];
 
 		}
-
-		bakingState.enabled = false;
-		bakingState.weight = 0f;
 
 		return boneMatrices;
 	}

@@ -11,9 +11,7 @@ public struct LodData
 	public float Lod1Distance;
 	public float Lod2Distance;
 	public float Lod3Distance;
-
-	public float Scale;
-
+	
 	public LodData(Mesh lod1Mesh, Mesh lod2Mesh, Mesh lod3Mesh, float lod1Distance, float lod2Distance, float lod3Distance)
 	{
 		Lod1Mesh = lod1Mesh;
@@ -22,6 +20,5 @@ public struct LodData
 		Lod1Distance = lod1Distance;
 		Lod2Distance = lod2Distance;
 		Lod3Distance = lod3Distance;
-		Scale = 1;
 	}
 }
