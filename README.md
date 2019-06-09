@@ -18,3 +18,4 @@ Disadvantages
 
 Known issues:
 * Currently no frustum culling
+* HDRP / LWRP is not supported at the moment

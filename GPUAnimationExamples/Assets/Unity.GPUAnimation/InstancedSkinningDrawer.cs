@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
-namespace GPUAnimPackage
+namespace Unity.GPUAnimation
 {
     public class InstancedSkinningDrawer : IDisposable
     {

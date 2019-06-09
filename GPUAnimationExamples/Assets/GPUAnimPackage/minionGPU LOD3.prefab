@@ -25,7 +25,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100034, guid: a74541195774e1c4cbf37ae045cfb255, type: 3}
       propertyPath: m_Name
-      value: minionGPU LOd3 Variant
+      value: minionGPU LOD3
       objectReference: {fileID: 0}
     - target: {fileID: 400034, guid: a74541195774e1c4cbf37ae045cfb255, type: 3}
       propertyPath: m_LocalPosition.x
@@ -75,7 +75,8 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 01262259b8597f34886395bfc78a3dac, type: 2}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 11100000, guid: a74541195774e1c4cbf37ae045cfb255, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: a74541195774e1c4cbf37ae045cfb255, type: 3}
 --- !u!1 &1317764076368625891 stripped
 GameObject:

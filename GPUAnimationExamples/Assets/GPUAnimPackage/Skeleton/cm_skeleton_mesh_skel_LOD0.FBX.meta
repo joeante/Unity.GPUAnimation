@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6c39e218ffb485d49b99e1175de6fb75
+guid: d900fb514b46dd340aa8fd0a7bd76456
 ModelImporter:
   serializedVersion: 25
   internalIDToNameTable:
@@ -14,70 +14,55 @@ ModelImporter:
     second: Bip001 L Calf
   - first:
       1: 100006
-    second: Bip001 L Clavicle
-  - first:
-      1: 100008
     second: Bip001 L Foot
   - first:
-      1: 100010
+      1: 100008
     second: Bip001 L Forearm
   - first:
-      1: 100012
+      1: 100010
     second: Bip001 L Hand
   - first:
-      1: 100014
+      1: 100012
     second: Bip001 L Thigh
   - first:
-      1: 100016
-    second: Bip001 L Toe0
-  - first:
-      1: 100018
+      1: 100014
     second: Bip001 L UpperArm
   - first:
-      1: 100020
-    second: Bip001 Neck
-  - first:
-      1: 100022
+      1: 100016
     second: Bip001 Pelvis
   - first:
-      1: 100024
+      1: 100018
     second: Bip001 R Calf
   - first:
-      1: 100026
-    second: Bip001 R Clavicle
-  - first:
-      1: 100028
+      1: 100020
     second: Bip001 R Foot
   - first:
-      1: 100030
+      1: 100022
     second: Bip001 R Forearm
   - first:
-      1: 100032
+      1: 100024
     second: Bip001 R Hand
   - first:
-      1: 100034
+      1: 100026
     second: Bip001 R Thigh
   - first:
-      1: 100036
-    second: Bip001 R Toe0
-  - first:
-      1: 100038
+      1: 100028
     second: Bip001 R UpperArm
   - first:
-      1: 100040
+      1: 100030
     second: Bip001 Spine
   - first:
-      1: 100042
+      1: 100032
     second: Bip001 Spine1
   - first:
-      1: 100044
-    second: origin
-  - first:
-      1: 100046
+      1: 100034
     second: //RootNode
   - first:
-      1: 100048
-    second: Bip001 skirt_correct
+      1: 100036
+    second: origin
+  - first:
+      1: 100038
+    second: skeleton_LOD0
   - first:
       4: 400000
     second: Bip001
@@ -89,85 +74,79 @@ ModelImporter:
     second: Bip001 L Calf
   - first:
       4: 400006
-    second: Bip001 L Clavicle
-  - first:
-      4: 400008
     second: Bip001 L Foot
   - first:
-      4: 400010
+      4: 400008
     second: Bip001 L Forearm
   - first:
-      4: 400012
+      4: 400010
     second: Bip001 L Hand
   - first:
-      4: 400014
+      4: 400012
     second: Bip001 L Thigh
   - first:
-      4: 400016
-    second: Bip001 L Toe0
-  - first:
-      4: 400018
+      4: 400014
     second: Bip001 L UpperArm
   - first:
-      4: 400020
-    second: Bip001 Neck
-  - first:
-      4: 400022
+      4: 400016
     second: Bip001 Pelvis
   - first:
-      4: 400024
+      4: 400018
     second: Bip001 R Calf
   - first:
-      4: 400026
-    second: Bip001 R Clavicle
-  - first:
-      4: 400028
+      4: 400020
     second: Bip001 R Foot
   - first:
-      4: 400030
+      4: 400022
     second: Bip001 R Forearm
   - first:
-      4: 400032
+      4: 400024
     second: Bip001 R Hand
   - first:
-      4: 400034
+      4: 400026
     second: Bip001 R Thigh
   - first:
-      4: 400036
-    second: Bip001 R Toe0
-  - first:
-      4: 400038
+      4: 400028
     second: Bip001 R UpperArm
   - first:
-      4: 400040
+      4: 400030
     second: Bip001 Spine
   - first:
-      4: 400042
+      4: 400032
     second: Bip001 Spine1
   - first:
-      4: 400044
-    second: origin
-  - first:
-      4: 400046
+      4: 400034
     second: //RootNode
   - first:
-      4: 400048
-    second: Bip001 skirt_correct
+      4: 400036
+    second: origin
+  - first:
+      4: 400038
+    second: skeleton_LOD0
+  - first:
+      21: 2100000
+    second: 'Material #49'
+  - first:
+      43: 4300000
+    second: skeleton_LOD0
   - first:
       74: 7400000
-    second: Attack1
+    second: Take 001
   - first:
       95: 9500000
     second: //RootNode
   - first:
       111: 11100000
     second: //RootNode
+  - first:
+      137: 13700000
+    second: skeleton_LOD0
   externalObjects: {}
   materials:
     importMaterials: 0
     materialName: 0
     materialSearch: 1
-    materialLocation: 0
+    materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
@@ -191,12 +170,12 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Attack1
+      name: Take 001
       takeName: Take 001
       internalID: 7400000
-      firstFrame: 100
-      lastFrame: 140.00002
-      wrapMode: 2
+      firstFrame: -30
+      lastFrame: 160
+      wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
@@ -215,48 +194,8 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events: []
-      transformMask:
-      - path: 
-        weight: 1
-      - path: Bip001
-        weight: 1
-      - path: Bip001/Bip001 Pelvis
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 L Thigh
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 L Thigh/Bip001 L Calf
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 L Thigh/Bip001 L Calf/Bip001 L Foot
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 R Thigh
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 R Thigh/Bip001 R Calf
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 R Thigh/Bip001 R Calf/Bip001 R Foot
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 Head
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 L UpperArm
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 L UpperArm/Bip001 L Forearm
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 L UpperArm/Bip001 L Forearm/Bip001
-          L Hand
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 R UpperArm
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 R UpperArm/Bip001 R Forearm
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 R UpperArm/Bip001 R Forearm/Bip001
-          R Hand
-        weight: 1
-      - path: Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 Spine1
-        weight: 1
-      - path: origin
-        weight: 1
-      maskType: 0
+      transformMask: []
+      maskType: 3
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     isReadable: 1
@@ -266,10 +205,10 @@ ModelImporter:
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
-    importVisibility: 0
+    importVisibility: 1
     importBlendShapes: 1
-    importCameras: 0
-    importLights: 0
+    importCameras: 1
+    importLights: 1
     swapUVChannels: 0
     generateSecondaryUV: 0
     useFileUnits: 1
@@ -290,7 +229,7 @@ ModelImporter:
     normalSmoothAngle: 60
     normalImportMode: 0
     tangentImportMode: 3
-    normalCalculationMode: 0
+    normalCalculationMode: 4
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
@@ -312,7 +251,7 @@ ModelImporter:
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 1
-    skeletonHasParents: 0
+    skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   animationType: 1
   humanoidOversampling: 1

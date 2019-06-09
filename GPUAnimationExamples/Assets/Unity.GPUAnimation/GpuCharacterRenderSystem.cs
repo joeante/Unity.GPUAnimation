@@ -9,11 +9,10 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Profiling;
-using UnityEngine.UIElements;
 
-namespace GPUAnimPackage
+namespace Unity.GPUAnimation
 {
-	struct AnimationState : IComponentData
+	public struct GPUAnimationState : IComponentData
 	{
 		public bool  FirstFrame;
 		public float Time;
@@ -139,9 +138,9 @@ namespace GPUAnimPackage
 	public class CalculateTextureCoordinateSystem : JobComponentSystem
 	{
 		[BurstCompile]
-		struct CalculateTextureCoordJob : IJobForEach<AnimationState, AnimationTextureCoordinate>
+		struct CalculateTextureCoordJob : IJobForEach<GPUAnimationState, AnimationTextureCoordinate>
 		{
-			public void Execute([ReadOnly]ref AnimationState animstate, ref AnimationTextureCoordinate textureCoordinate)
+			public void Execute([ReadOnly]ref GPUAnimationState animstate, ref AnimationTextureCoordinate textureCoordinate)
 			{
 				ref var clips = ref animstate.AnimationClipSet.Value.Clips;
 				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
@@ -210,7 +209,7 @@ namespace GPUAnimPackage
 
         protected override void OnCreate()
         {
-	        m_Characters = GetEntityQuery(ComponentType.ReadOnly<RenderCharacter>(), ComponentType.ReadOnly<AnimationState>(), ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<AnimationTextureCoordinate>());
+	        m_Characters = GetEntityQuery(ComponentType.ReadOnly<RenderCharacter>(), ComponentType.ReadOnly<GPUAnimationState>(), ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<AnimationTextureCoordinate>());
         }
 
 

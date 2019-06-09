@@ -2,9 +2,8 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-namespace GPUAnimPackage
+namespace Unity.GPUAnimation
 {
-    
 	public static class CharacterUtility
 	{
 		public static BlobAssetReference<BakedAnimationClipSet> CreateClipSet(KeyframeTextureBaker.BakedData data)
@@ -37,7 +36,7 @@ namespace GPUAnimPackage
 			//@TODO: Perform validation that the shader supports GPU Skinning mode
 			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, lod);
 
-			var animState = default(AnimationState);
+			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
 			animState.FirstFrame = true;
 			manager.AddComponentData(entity, animState);

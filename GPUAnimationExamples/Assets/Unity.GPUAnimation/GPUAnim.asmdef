@@ -1,5 +1,5 @@
 {
-    "name": "GPUAnim",
+    "name": "Unity.GPUAnimation",
     "references": [
         "Unity.Mathematics",
         "Unity.Collections",
