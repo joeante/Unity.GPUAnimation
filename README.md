@@ -14,4 +14,5 @@ Advantages:
 Disadvantages
 * Currently you can only play one clip at a time (With additional work it might be possible to add support for two blendable clips)
 * All parts of the animated character must be on a single SkinnedMeshRenderer. Eg. Attachments like swords can't be seperate Meshes but must be part of the skin mesh.
-* A special shader must be used
+* A special shader must be used to render the character (Currently only provided for builtin renderer)
+* Currently no frustum culling. This will be addressed in the future.
