@@ -8,6 +8,9 @@ NOTE: This is not intended to be used or extended as a complete animation system
 
 GameObjectConversion pipeline is provided to bake existing Unity Character Rigs & AnimationClips into GPU Skin renderers.
 
+This code is based on the Nordeus / Unity collaboration. I took the core code from the animation system, cleaned it up a whole lot and made a good workflow compatible with latest entities for it.
+https://www.youtube.com/watch?v=0969LalB7vw
+
 # Advantages:
 * The state to transfer to GPU is 12 bytes per character for the animation state + 64 bytes for the local to world matrix. Thus the CPU cost is incredibly low.
 * All animation clip sampling work happens in the vertex shader. Thus the GPU cost can easily be scaled by providing skinned mesh LODs with fewer vertices
