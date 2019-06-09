@@ -8,12 +8,14 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 
 namespace GPUAnimPackage
 {
 	struct AnimationState : IComponentData
 	{
+		public bool  FirstFrame;
 		public float Time;
 		public int   AnimationClipIndex;
 		
@@ -133,33 +135,6 @@ namespace GPUAnimPackage
 
 	}
 
-	public class SimpleAnim : JobComponentSystem
-	{
-		//[BurstCompile]
-		struct SimpleAnimJob : IJobForEach<AnimationState>
-		{
-			public float DeltaTime;
-			public void Execute(ref AnimationState animstate)
-			{
-				ref var clips = ref animstate.AnimationClipSet.Value.Clips;
-				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
-				{
-					var length = clips[animstate.AnimationClipIndex].AnimationLength;
-					animstate.Time += DeltaTime;
-				}
-				else
-				{
-					// How to warn???
-				}
-			}
-		}
-
-		protected override JobHandle OnUpdate(JobHandle inputDeps)
-		{
-			return new SimpleAnimJob { DeltaTime = Time.deltaTime}.Schedule(this, inputDeps);
-		}
-	}
-	
 	[UpdateInGroup(typeof(PresentationSystemGroup))]
 	public class CalculateTextureCoordinateSystem : JobComponentSystem
 	{
@@ -217,8 +192,12 @@ namespace GPUAnimPackage
 		        
 				m_Characters.SetFilter(character);
 
-		        var coords = m_Characters.ToComponentDataArray<AnimationTextureCoordinate>(Allocator.TempJob);
-		        var localToWorld = m_Characters.ToComponentDataArray<LocalToWorld>(Allocator.TempJob);
+				Profiler.BeginSample("ExtractState");
+				JobHandle jobA, jobB;
+		        var coords = m_Characters.ToComponentDataArray<AnimationTextureCoordinate>(Allocator.TempJob, out jobA);
+		        var localToWorld = m_Characters.ToComponentDataArray<LocalToWorld>(Allocator.TempJob, out jobB);
+		        JobHandle.CompleteAll(ref jobA, ref jobB);
+		        Profiler.EndSample();
 		        
 		        drawer.Draw(coords.Reinterpret_Temp<AnimationTextureCoordinate, float3>(), localToWorld.Reinterpret_Temp<LocalToWorld, float4x4>());
 		        

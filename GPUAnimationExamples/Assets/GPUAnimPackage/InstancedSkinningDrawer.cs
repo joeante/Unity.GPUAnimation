@@ -9,7 +9,7 @@ namespace GPUAnimPackage
 {
     public class InstancedSkinningDrawer : IDisposable
     {
-        private const int PreallocatedBufferSize = 32 * 1024;
+        private const int PreallocatedBufferSize = 1024;
 
         private ComputeBuffer argsBuffer;
 
@@ -61,6 +61,18 @@ namespace GPUAnimPackage
             if (count == 0) 
                 return;
 
+            if (count > objectToWorldBuffer.count)
+            {
+                objectToWorldBuffer.Dispose();
+                textureCoordinatesBuffer.Dispose();
+                
+                objectToWorldBuffer = new ComputeBuffer(TextureCoordinates.Length, 16 * sizeof(float));
+                textureCoordinatesBuffer = new ComputeBuffer(TextureCoordinates.Length, 3 * sizeof(float));
+            }
+
+            this.material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
+            this.material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
+            
             Profiler.BeginSample("Modify compute buffers");
 
             Profiler.BeginSample("Shader set data");

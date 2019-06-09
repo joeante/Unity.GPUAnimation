@@ -27,6 +27,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: minionGPU LOD0
       objectReference: {fileID: 0}
+    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.67
+      objectReference: {fileID: 0}
+    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.09
+      objectReference: {fileID: 0}
     - target: {fileID: 11100000, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
       propertyPath: m_Animations.Array.size
       value: 1
@@ -43,18 +55,6 @@ PrefabInstance:
       propertyPath: m_Animations.Array.data[0]
       value: 
       objectReference: {fileID: 7400000, guid: e2cbc102bf5423f43a12c4cf95311af8, type: 3}
-    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 2.67
-      objectReference: {fileID: 0}
-    - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1.09
-      objectReference: {fileID: 0}
     - target: {fileID: 13700000, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 

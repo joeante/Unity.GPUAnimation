@@ -39,6 +39,7 @@ namespace GPUAnimPackage
 
 			var animState = default(AnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
+			animState.FirstFrame = true;
 			manager.AddComponentData(entity, animState);
 			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
 
