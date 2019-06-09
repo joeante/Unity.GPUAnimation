@@ -1,6 +1,6 @@
-# GPUAnimation
+# Simple but very fast GPU vertex shader based animation system for Unity.Entities
 
-Simple but very fast GPU vertex shader based animation system.
+
 The animationclip is converted to three textures that are sampled per vertex. All animation curves are converted to world space.
 
 NOTE: This is not intended to be used or extended as a complete animation system. It is specifically made for the case of animating massive amounts of characters where each character has unique animation but the animation state is trivial. Specifically animations can't be blended. Only one clip can be played at a time per character.
