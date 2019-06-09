@@ -1,11 +1,18 @@
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 using Unity.GPUAnimation;
 
-public class SimpleAnim : JobComponentSystem
+
+struct SimpleAnim : IComponentData
 {
-    //[BurstCompile]
+}
+
+public class SimpleAnimSystem : JobComponentSystem
+{
+    [BurstCompile]
+    [RequireComponentTag(typeof(SimpleAnim))]
     struct SimpleAnimJob : IJobForEach<GPUAnimationState>
     {
         public float DeltaTime;

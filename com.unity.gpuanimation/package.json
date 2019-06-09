@@ -8,12 +8,15 @@
   "dependencies": {
     "com.unity.entities": "0.0.12-preview.33"
   },
+
+  
   "keywords": [
     "entities",
     "unity",
-    "animation",
+    "animation"
   ]
 }
+
 
 
 
