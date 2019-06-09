@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+
+namespace GPUAnimPackage
+{
+	struct AnimationState : IComponentData
+	{
+		public float NormalizedTime;
+		public int   AnimationClipIndex;
+		
+		public BlobAssetReference<BakedAnimationClipSet> AnimationClipSet;
+	}
+	
+	struct AnimationTextureCoordinate : IComponentData
+	{
+		public float3 Coordinate;
+	}
+	
+	
+	public struct BakedAnimationClipSet
+	{
+		public BlobArray<BakedAnimationClip> Clips;
+	}
+
+	public struct BakedAnimationClip
+	{
+		public float TextureOffset;
+		public float TextureRange;
+		public float OnePixelOffset;
+		public float TextureWidth;
+
+		public float AnimationLength;
+		public bool  Looping;
+
+		public BakedAnimationClip(AnimationTextures animTextures, KeyframeTextureBaker.AnimationClipData clipData)
+		{
+			float onePixel = 1f / animTextures.Animation0.width;
+			float start = (float)clipData.PixelStart / animTextures.Animation0.width + onePixel * 0.5f;
+			float end = (float)clipData.PixelEnd / animTextures.Animation0.width + onePixel * 0.5f;
+
+			TextureOffset = start;
+			TextureRange = end - start;
+			OnePixelOffset = onePixel;
+			TextureWidth = animTextures.Animation0.width;
+
+			AnimationLength = clipData.Clip.length;
+			Looping = clipData.Clip.wrapMode == WrapMode.Loop;
+		}
+		
+		public float3 ComputeCoordinate(float normalizedTime)
+		{
+			float texturePosition = normalizedTime * TextureRange + TextureOffset;
+			float lowerPixelFloor = math.floor(texturePosition * TextureWidth);
+
+			float lowerPixelCenter = (lowerPixelFloor * 1.0f) / TextureWidth;
+			float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
+			float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
+			float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
+				
+			return texturePositionData;
+		}
+	}
+
+	struct RenderCharacter : ISharedComponentData, IEquatable<RenderCharacter>
+	{
+		//@TODO: Would be nice if we had BlobAssetReference in shared component data support (Serialize not supported...) 
+		public Material                                  Material;
+		public AnimationTextures                         AnimationTexture;
+		public Mesh                                      Mesh;
+		
+		public bool Equals(RenderCharacter other)
+		{
+			return Equals(Material, other.Material) && AnimationTexture.Equals(other.AnimationTexture) && Equals(Mesh, other.Mesh);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				var hashCode = (ReferenceEquals(Material, null) ? 0 : Material.GetHashCode());
+				hashCode = (hashCode * 397) ^ AnimationTexture.GetHashCode();
+				hashCode = (hashCode * 397) ^ (ReferenceEquals(Mesh, null) ? 0 : Mesh.GetHashCode());
+				return hashCode;
+			}
+		}
+	}
+
+	unsafe public static class NativeExtensionTemp
+	{
+        public static NativeArray<U> Reinterpret_Temp<T, U>(this NativeArray<T> array) where U : struct where T : struct
+        {
+            var tSize = UnsafeUtility.SizeOf<T>();
+            var uSize = UnsafeUtility.SizeOf<U>();
+
+             var byteLen = ((long) array.Length) * tSize;
+            var uLen = byteLen / uSize;
+
+ #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (uLen * uSize != byteLen)
+            {
+                throw new InvalidOperationException($"Types {typeof(T)} (array length {array.Length}) and {typeof(U)} cannot be aliased due to size constraints. The size of the types and lengths involved must line up.");
+            }
+
+ #endif
+            var ptr = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(array);
+            var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<U>(ptr, (int) uLen, Allocator.Invalid);
+
+ #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            var handle = NativeArrayUnsafeUtility.GetAtomicSafetyHandle(array);
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, handle);
+#endif
+
+             return result;
+        }
+
+	}
+
+	public class SimpleAnim : JobComponentSystem
+	{
+		[BurstCompile]
+		struct SimpleAnimJob : IJobForEach<AnimationState>
+		{
+			public float DeltaTime;
+			public void Execute(ref AnimationState animstate)
+			{
+				ref var clips = ref animstate.AnimationClipSet.Value.Clips;
+				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
+				{
+					var length = clips[animstate.AnimationClipIndex].AnimationLength;
+					animstate.NormalizedTime = Mathf.Repeat(animstate.NormalizedTime + DeltaTime / length, 1.0F);
+				}
+				else
+				{
+					// How to warn???
+				}
+			}
+		}
+
+		protected override JobHandle OnUpdate(JobHandle inputDeps)
+		{
+			return new SimpleAnimJob { DeltaTime = Time.deltaTime}.Schedule(this, inputDeps);
+		}
+	}
+	
+	[UpdateInGroup(typeof(PresentationSystemGroup))]
+	public class CalculateTextureCoordinateSystem : JobComponentSystem
+	{
+		[BurstCompile]
+		struct CalculateTextureCoordJob : IJobForEach<AnimationState, AnimationTextureCoordinate>
+		{
+			public void Execute([ReadOnly]ref AnimationState animstate, ref AnimationTextureCoordinate textureCoordinate)
+			{
+				ref var clips = ref animstate.AnimationClipSet.Value.Clips;
+				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
+				{
+					textureCoordinate.Coordinate = clips[animstate.AnimationClipIndex].ComputeCoordinate(animstate.NormalizedTime);
+				}
+				else
+				{
+					// How to warn???
+				}
+			}
+		}
+
+		protected override JobHandle OnUpdate(JobHandle inputDeps)
+		{
+			return new CalculateTextureCoordJob().Schedule(this, inputDeps);
+		}
+	}
+
+	[UpdateInGroup(typeof(PresentationSystemGroup))]
+	[UpdateAfter(typeof(CalculateTextureCoordinateSystem))]
+	public class GpuCharacterRenderSystem : JobComponentSystem
+    {
+	    private List<RenderCharacter> _Characters = new List<RenderCharacter>();
+	    private Dictionary<RenderCharacter, InstancedSkinningDrawer> _Drawers = new Dictionary<RenderCharacter, InstancedSkinningDrawer>();
+
+	    private EntityQuery m_Characters;
+
+
+	    protected override JobHandle OnUpdate(JobHandle inputDeps)
+        {
+	        _Characters.Clear();
+	        EntityManager.GetAllUniqueSharedComponentData(_Characters);
+
+	        foreach (var character in _Characters)
+	        {
+		        if (character.Material == null || character.Mesh == null)
+			        continue;
+		        InstancedSkinningDrawer drawer;
+		        if (!_Drawers.TryGetValue(character, out drawer))
+		        {
+			        drawer = new InstancedSkinningDrawer(character.Material, character.Mesh, character.AnimationTexture);
+			        _Drawers.Add(character, drawer);
+		        }
+		        
+		        m_Characters.SetFilter(character);
+
+		        var coords = m_Characters.ToComponentDataArray<AnimationTextureCoordinate>(Allocator.TempJob);
+		        var localToWorld = m_Characters.ToComponentDataArray<LocalToWorld>(Allocator.TempJob);
+		        
+		        drawer.Draw(coords.Reinterpret_Temp<AnimationTextureCoordinate, float3>(), localToWorld.Reinterpret_Temp<LocalToWorld, float4x4>());
+		        
+		        coords.Dispose();
+		        localToWorld.Dispose();
+	        }
+
+	        return inputDeps;
+        }
+
+        protected override void OnCreate()
+        {
+	        m_Characters = GetEntityQuery(ComponentType.ReadOnly<RenderCharacter>(), ComponentType.ReadOnly<AnimationState>(), ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<AnimationTextureCoordinate>());
+        }
+
+
+        protected override void OnDestroy()
+        {
+	        foreach(var drawer in _Drawers.Values)
+		        drawer.Dispose();
+	        _Drawers = null;
+        }
+    }
+}

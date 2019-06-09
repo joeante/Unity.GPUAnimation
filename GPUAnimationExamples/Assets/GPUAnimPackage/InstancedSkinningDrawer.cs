@@ -18,9 +18,6 @@ namespace GPUAnimPackage
         private ComputeBuffer textureCoordinatesBuffer;
         private ComputeBuffer objectToWorldBuffer;
 
-        public NativeList<float3> TextureCoordinates;
-        public NativeList<float4x4> ObjectToWorld;
-
         private Material material;
 
         private Mesh mesh;
@@ -37,10 +34,7 @@ namespace GPUAnimPackage
 
             objectToWorldBuffer = new ComputeBuffer(PreallocatedBufferSize, 16 * sizeof(float));
             textureCoordinatesBuffer = new ComputeBuffer(PreallocatedBufferSize, 3 * sizeof(float));
-
-            ObjectToWorld = new NativeList<float4x4>(PreallocatedBufferSize, Allocator.Persistent);
-            TextureCoordinates = new NativeList<float3>(PreallocatedBufferSize, Allocator.Persistent);
-		
+	
             this.material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
             this.material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
             this.material.SetTexture("_AnimationTexture0", animTexture.Animation0);
@@ -53,31 +47,26 @@ namespace GPUAnimPackage
             UnityEngine.Object.DestroyImmediate(material);
 		
             if (argsBuffer != null) argsBuffer.Dispose();
-
             if (objectToWorldBuffer != null) objectToWorldBuffer.Dispose();
-            if (ObjectToWorld.IsCreated) ObjectToWorld.Dispose();
-
             if (textureCoordinatesBuffer != null) textureCoordinatesBuffer.Dispose();
-            if (TextureCoordinates.IsCreated) TextureCoordinates.Dispose();
         }
-
-        public void Draw()
+        
+        public void Draw(NativeArray<float3> TextureCoordinates, NativeArray<float4x4> ObjectToWorld)
         {
-            if (objectToWorldBuffer == null)
-                return;
             // CHECK: Systems seem to be called when exiting playmode once things start getting destroyed, such as the mesh here.
             if (mesh == null || material == null) 
                 return;
 
-            int count = UnitToDrawCount;
-            if (count == 0) return;
+            int count = TextureCoordinates.Length;
+            if (count == 0) 
+                return;
 
             Profiler.BeginSample("Modify compute buffers");
 
             Profiler.BeginSample("Shader set data");
 
-            objectToWorldBuffer.SetData(ObjectToWorld.AsArray(), 0, 0, count);
-            textureCoordinatesBuffer.SetData(TextureCoordinates.AsArray(), 0, 0, count);
+            objectToWorldBuffer.SetData(ObjectToWorld, 0, 0, count);
+            textureCoordinatesBuffer.SetData(TextureCoordinates, 0, 0, count);
             
             Profiler.EndSample();
 
@@ -88,14 +77,6 @@ namespace GPUAnimPackage
             argsBuffer.SetData(indirectArgs);
 
             Graphics.DrawMeshInstancedIndirect(mesh, 0, material, new Bounds(Vector3.zero, 1000000 * Vector3.one), argsBuffer, 0, new MaterialPropertyBlock(), ShadowCastingMode.Off, true);
-        }
-
-        public int UnitToDrawCount
-        {
-            get
-            {
-                return ObjectToWorld.Length;
-            }
         }
     }
 }

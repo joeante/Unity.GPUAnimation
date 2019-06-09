@@ -60,7 +60,13 @@ public static class KeyframeTextureBaker
 
 		// @TODO: warning about more than one materials
 
+		// Before messing about with some arbitrary game object hierarchy.
+		// Instantiate the character, but make sure it's inactive so it doesn't trigger any unexpected systems. 
+		var wasActive = animationRoot.activeSelf;
+		animationRoot.SetActive(false);
 		var instance = GameObject.Instantiate(animationRoot, Vector3.zero, Quaternion.identity);
+		animationRoot.SetActive(wasActive);
+		
 		instance.transform.localScale = Vector3.one;
 		var skinRenderer = instance.GetComponentInChildren<SkinnedMeshRenderer>();
 
