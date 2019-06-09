@@ -4,13 +4,38 @@ using UnityEditor;
 using UnityEngine;
 using Object = System.Object;
 
+
+public struct AnimationTextures : IEquatable<AnimationTextures>
+{
+	public Texture2D Animation0;
+	public Texture2D Animation1;
+	public Texture2D Animation2;
+
+	public bool Equals(AnimationTextures other)
+	{
+		return Animation0 == other.Animation0 && Animation1 == other.Animation1 && Animation2 == other.Animation2;
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			var hashCode = (ReferenceEquals(Animation0, null) ? 0 : Animation0.GetHashCode());
+			hashCode = (hashCode * 397) ^ (ReferenceEquals(Animation1, null) ? 0 : Animation1.GetHashCode());
+			hashCode = (hashCode * 397) ^ (ReferenceEquals(Animation2, null) ? 0 : Animation2.GetHashCode());
+			return hashCode;
+		}
+	}
+}
+
 public static class KeyframeTextureBaker
 {
+	
+
+	
 	public class BakedData
 	{
-		public Texture2D Texture0;
-		public Texture2D Texture1;
-		public Texture2D Texture2;
+		public AnimationTextures AnimationTextures;
 		public Mesh NewMesh;
 		public LodData lods;
 		public float Framerate;
@@ -62,24 +87,24 @@ public static class KeyframeTextureBaker
 
 		int numberOfBones = sampledBoneMatrices[0].GetLength(1);
 
-		bakedData.Texture0 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
-		bakedData.Texture0.wrapMode = TextureWrapMode.Clamp;
-		bakedData.Texture0.filterMode = FilterMode.Point;
-		bakedData.Texture0.anisoLevel = 0;
+		var tex0 = bakedData.AnimationTextures.Animation0 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
+		tex0.wrapMode = TextureWrapMode.Clamp;
+		tex0.filterMode = FilterMode.Point;
+		tex0.anisoLevel = 0;
 
-		bakedData.Texture1 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
-		bakedData.Texture1.wrapMode = TextureWrapMode.Clamp;
-		bakedData.Texture1.filterMode = FilterMode.Point;
-		bakedData.Texture1.anisoLevel = 0;
+		var tex1 = bakedData.AnimationTextures.Animation1 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
+		tex1.wrapMode = TextureWrapMode.Clamp;
+		tex1.filterMode = FilterMode.Point;
+		tex1.anisoLevel = 0;
 
-		bakedData.Texture2 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
-		bakedData.Texture2.wrapMode = TextureWrapMode.Clamp;
-		bakedData.Texture2.filterMode = FilterMode.Point;
-		bakedData.Texture2.anisoLevel = 0;
+		var tex2 = bakedData.AnimationTextures.Animation2 = new Texture2D(numberOfKeyFrames, numberOfBones, TextureFormat.RGBAFloat, false);
+		tex2.wrapMode = TextureWrapMode.Clamp;
+		tex2.filterMode = FilterMode.Point;
+		tex2.anisoLevel = 0;
 
-		Color[] texture0Color = new Color[bakedData.Texture0.width * bakedData.Texture0.height];
-		Color[] texture1Color = new Color[bakedData.Texture0.width * bakedData.Texture0.height];
-		Color[] texture2Color = new Color[bakedData.Texture0.width * bakedData.Texture0.height];
+		Color[] texture0Color = new Color[tex0.width * tex0.height];
+		Color[] texture1Color = new Color[tex0.width * tex0.height];
+		Color[] texture2Color = new Color[tex0.width * tex0.height];
 
 		int runningTotalNumberOfKeyframes = 0;
 		for (int i = 0; i < sampledBoneMatrices.Count; i++)
@@ -108,7 +133,7 @@ public static class KeyframeTextureBaker
 					//translations[index] = translation;
 					//rotations[index] = rotation;
 
-					int index = Get1DCoord(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex, bakedData.Texture0.width);
+					int index = Get1DCoord(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex, tex0.width);
 
 					texture0Color[index] = sampledBoneMatrices[i][keyframeIndex, boneIndex].GetRow(0);
 					texture1Color[index] = sampledBoneMatrices[i][keyframeIndex, boneIndex].GetRow(1);
@@ -130,9 +155,9 @@ public static class KeyframeTextureBaker
 			runningTotalNumberOfKeyframes += sampledBoneMatrices[i].GetLength(0);
 		}
 
-		bakedData.Texture0.SetPixels(texture0Color);
-		bakedData.Texture1.SetPixels(texture1Color);
-		bakedData.Texture2.SetPixels(texture2Color);
+		tex0.SetPixels(texture0Color);
+		tex1.SetPixels(texture1Color);
+		tex2.SetPixels(texture2Color);
 
 		runningTotalNumberOfKeyframes = 0;
 		for (int i = 0; i < sampledBoneMatrices.Count; i++)
@@ -143,9 +168,9 @@ public static class KeyframeTextureBaker
 				{
 					//int d1_index = Get1DCoord(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex, bakedData.Texture0.width);
 
-					Color pixel0 = bakedData.Texture0.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
-					Color pixel1 = bakedData.Texture1.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
-					Color pixel2 = bakedData.Texture2.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
+					Color pixel0 = tex0.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
+					Color pixel1 = tex1.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
+					Color pixel2 = tex2.GetPixel(runningTotalNumberOfKeyframes + keyframeIndex, boneIndex);
 
 					if ((Vector4)pixel0 != sampledBoneMatrices[i][keyframeIndex, boneIndex].GetRow(0))
 					{
@@ -164,9 +189,9 @@ public static class KeyframeTextureBaker
 			runningTotalNumberOfKeyframes += sampledBoneMatrices[i].GetLength(0);
 		}
 
-		bakedData.Texture0.Apply(false, true);
-		bakedData.Texture1.Apply(false, true);
-		bakedData.Texture2.Apply(false, true);
+		tex0.Apply(false, true);
+		tex1.Apply(false, true);
+		tex2.Apply(false, true);
 		
 		bakedData.AnimationsDictionary = new Dictionary<string, AnimationClipData>();
 		foreach (var clipData in bakedData.Animations)

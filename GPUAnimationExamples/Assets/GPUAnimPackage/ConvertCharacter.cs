@@ -1,17 +1,97 @@
-﻿using Unity.Collections;
+﻿using System;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace GPUAnimPackage
 {
-	/*
 	struct AnimationState : IComponentData
 	{
 		public float NormalizedTime;
 		public int   AnimationClipIndex;
+		
+		public BlobAssetReference<BakedAnimationClipSet> AnimationClipSet;
 	}
-	*/
+	
+	
+	public struct BakedAnimationClipSet
+	{
+		public BlobArray<BakedAnimationClip> Clips;
+	}
+
+	public struct BakedAnimationClip
+	{
+		public float TextureOffset;
+		public float TextureRange;
+		public float OnePixelOffset;
+		public int   TextureWidth;
+
+		public float AnimationLength;
+		public bool  Looping;
+
+		public float3 ComputeCoordinate(float normalizedTime)
+		{
+			float texturePosition = normalizedTime * TextureRange + TextureOffset;
+			int lowerPixelInt = (int)math.floor(texturePosition * TextureWidth);
+
+			float lowerPixelCenter = (lowerPixelInt * 1.0f) / TextureWidth;
+			float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
+			float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
+			float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
+				
+			return texturePositionData;
+		}
+	}
+
+	struct SharedCharacterState : ISharedComponentData, IEquatable<SharedCharacterState>
+	{
+		//@TODO: Would be nice if we had BlobAssetReference in shared component data support (Serialize not supported...) 
+		public Material                                  Material;
+		public AnimationTextures                         AnimationTexture;
+		public Mesh                                      Mesh;
+
+		public bool Equals(SharedCharacterState other)
+		{
+			return Equals(Material, other.Material) && AnimationTexture.Equals(other.AnimationTexture) && Equals(Mesh, other.Mesh);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				var hashCode = (ReferenceEquals(Material, null) ? 0 : Material.GetHashCode());
+				hashCode = (hashCode * 397) ^ AnimationTexture.GetHashCode();
+				hashCode = (hashCode * 397) ^ (ReferenceEquals(Mesh, null) ? 0 : Mesh.GetHashCode());
+				return hashCode;
+			}
+		}
+	}
+
+	public static class CharacterUtility
+	{
+		public static void AddCharacterComponents(EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips)
+		{
+			var renderer = characterRig.GetComponentInChildren<SkinnedMeshRenderer>();
+			
+			var lod = new LodData
+			{
+				Lod1Mesh = renderer.sharedMesh,
+				Lod2Mesh = renderer.sharedMesh,
+				Lod3Mesh = renderer.sharedMesh,
+				Lod1Distance = 0,
+				Lod2Distance = 100,
+				Lod3Distance = 10000,
+			};
+
+			//@TODO: Perform validation that the shader supports GPU Skinning mode
+			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, lod);
+			
+			manager.AddComponentData(entity, default(AnimationState));
+			//manager.AddSharedComponentData(entity, new );
+			
+		}
+	}
 
 	public class ConvertCharacter : MonoBehaviour
 	{
@@ -21,42 +101,18 @@ namespace GPUAnimPackage
 		private InstancedSkinningDrawer drawer;
 		private KeyframeTextureBaker.BakedData baked;
 
-
-		NativeArray<AnimationClipDataBaked> ClipDataBaked;
+		NativeArray<BakedAnimationClip> ClipDataBaked;
 			
 		public int animationIndex;
 		
-		public struct AnimationClipDataBaked
-		{
-			public float TextureOffset;
-			public float TextureRange;
-			public float OnePixelOffset;
-			public int TextureWidth;
-
-			public float AnimationLength;
-			public bool Looping;
-
-			public float3 ComputeCoordinate(float normalizedTime)
-			{
-				float texturePosition = normalizedTime * TextureRange + TextureOffset;
-				int lowerPixelInt = (int)math.floor(texturePosition * TextureWidth);
-
-				float lowerPixelCenter = (lowerPixelInt * 1.0f) / TextureWidth;
-				float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
-				float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
-				float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
-				
-				return texturePositionData;
-			}
-		}
 		
-		private void GetTextureRangeAndOffset(KeyframeTextureBaker.BakedData bakedData, KeyframeTextureBaker.AnimationClipData clipData, out float range, out float offset, out float onePixelOffset, out int textureWidth)
+		private void GetTextureRangeAndOffset(AnimationTextures animTextures, KeyframeTextureBaker.AnimationClipData clipData, out float range, out float offset, out float onePixelOffset, out int textureWidth)
 		{
-			float onePixel = 1f / bakedData.Texture0.width;
-			float start = (float)clipData.PixelStart / bakedData.Texture0.width + onePixel * 0.5f;
-			float end = (float)clipData.PixelEnd / bakedData.Texture0.width + onePixel * 0.5f;
+			float onePixel = 1f / animTextures.Animation0.width;
+			float start = (float)clipData.PixelStart / animTextures.Animation0.width + onePixel * 0.5f;
+			float end = (float)clipData.PixelEnd / animTextures.Animation0.width + onePixel * 0.5f;
 			onePixelOffset = onePixel;
-			textureWidth = bakedData.Texture0.width;
+			textureWidth = animTextures.Animation0.width;
 			range = end - start;
 			offset = start;
 		}
@@ -77,18 +133,18 @@ namespace GPUAnimPackage
 
 			baked = KeyframeTextureBaker.BakeClips(CharacterRig, Clips, lod);
 
-			ClipDataBaked = new NativeArray<AnimationClipDataBaked>(Clips.Length, Allocator.Persistent);
+			ClipDataBaked = new NativeArray<BakedAnimationClip>(Clips.Length, Allocator.Persistent);
 			for (int i = 0; i < baked.Animations.Count; i++)
 			{
-				AnimationClipDataBaked data = new AnimationClipDataBaked();
-				data.AnimationLength = baked.Animations[i].Clip.length;
-				GetTextureRangeAndOffset(baked, baked.Animations[i], out data.TextureRange, out data.TextureOffset, out data.OnePixelOffset, out data.TextureWidth);
-				data.Looping = baked.Animations[i].Clip.wrapMode == WrapMode.Loop;
+				BakedAnimationClip metaData = new BakedAnimationClip();
+				metaData.AnimationLength = baked.Animations[i].Clip.length;
+				GetTextureRangeAndOffset(baked.AnimationTextures, baked.Animations[i], out metaData.TextureRange, out metaData.TextureOffset, out metaData.OnePixelOffset, out metaData.TextureWidth);
+				metaData.Looping = baked.Animations[i].Clip.wrapMode == WrapMode.Loop;
 
-				ClipDataBaked[i] = data;
+				ClipDataBaked[i] = metaData;
 			}
 			
-			drawer = new InstancedSkinningDrawer(Material, baked.NewMesh, baked);
+			drawer = new InstancedSkinningDrawer(Material, baked.NewMesh, baked.AnimationTextures);
 		}
 
 		private void OnDisable()
@@ -96,7 +152,7 @@ namespace GPUAnimPackage
 			ClipDataBaked.Dispose();
 			drawer.Dispose();
 		}
-
+		
 		void LateUpdate()
 		{
 			drawer.TextureCoordinates.Clear();
@@ -107,7 +163,7 @@ namespace GPUAnimPackage
 			
 			drawer.TextureCoordinates.Add(clipData.ComputeCoordinate(normalizedTimeClip));
 			drawer.ObjectToWorld.Add(transform.localToWorldMatrix);
-
+			
 			drawer.Draw();
 		}
 	}

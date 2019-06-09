@@ -4,7 +4,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
-using Object = System.Object;
 
 namespace GPUAnimPackage
 {
@@ -22,19 +21,14 @@ namespace GPUAnimPackage
         public NativeList<float3> TextureCoordinates;
         public NativeList<float4x4> ObjectToWorld;
 
-
         private Material material;
 
         private Mesh mesh;
-
-        private KeyframeTextureBaker.BakedData bakedData;
-	
-
-        public unsafe InstancedSkinningDrawer(Material material, Mesh meshToDraw, KeyframeTextureBaker.BakedData  bakedData)
+        
+        public unsafe InstancedSkinningDrawer(Material srcMaterial, Mesh meshToDraw, AnimationTextures animTexture)
         {
-            this.bakedData = bakedData;
             this.mesh = meshToDraw;
-            this.material = new Material(material);
+            this.material = new Material(srcMaterial);
 
             argsBuffer = new ComputeBuffer(1, indirectArgs.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
             indirectArgs[0] = mesh.GetIndexCount(0);
@@ -47,11 +41,11 @@ namespace GPUAnimPackage
             ObjectToWorld = new NativeList<float4x4>(PreallocatedBufferSize, Allocator.Persistent);
             TextureCoordinates = new NativeList<float3>(PreallocatedBufferSize, Allocator.Persistent);
 		
-            material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
-            material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
-            material.SetTexture("_AnimationTexture0", bakedData.Texture0);
-            material.SetTexture("_AnimationTexture1", bakedData.Texture1);
-            material.SetTexture("_AnimationTexture2", bakedData.Texture2);
+            this.material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
+            this.material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
+            this.material.SetTexture("_AnimationTexture0", animTexture.Animation0);
+            this.material.SetTexture("_AnimationTexture1", animTexture.Animation1);
+            this.material.SetTexture("_AnimationTexture2", animTexture.Animation2);
         }
 
         public void Dispose()
@@ -71,6 +65,9 @@ namespace GPUAnimPackage
         {
             if (objectToWorldBuffer == null)
                 return;
+            // CHECK: Systems seem to be called when exiting playmode once things start getting destroyed, such as the mesh here.
+            if (mesh == null || material == null) 
+                return;
 
             int count = UnitToDrawCount;
             if (count == 0) return;
@@ -79,20 +76,12 @@ namespace GPUAnimPackage
 
             Profiler.BeginSample("Shader set data");
 
-            objectToWorldBuffer.SetData((NativeArray<float4x4>)ObjectToWorld, 0, 0, count);
-            textureCoordinatesBuffer.SetData((NativeArray<float3>)TextureCoordinates, 0, 0, count);
-
-            material.SetBuffer("textureCoordinatesBuffer", textureCoordinatesBuffer);
-            material.SetBuffer("objectToWorldBuffer", objectToWorldBuffer);
-            material.SetTexture("_AnimationTexture0", bakedData.Texture0);
-            material.SetTexture("_AnimationTexture1", bakedData.Texture1);
-            material.SetTexture("_AnimationTexture2", bakedData.Texture2);
+            objectToWorldBuffer.SetData(ObjectToWorld.AsArray(), 0, 0, count);
+            textureCoordinatesBuffer.SetData(TextureCoordinates.AsArray(), 0, 0, count);
+            
             Profiler.EndSample();
 
             Profiler.EndSample();
-
-            // CHECK: Systems seem to be called when exiting playmode once things start getting destroyed, such as the mesh here.
-            if (mesh == null || material == null) return;
 
             //indirectArgs[1] = (uint)data.Count;
             indirectArgs[1] = (uint)count;
