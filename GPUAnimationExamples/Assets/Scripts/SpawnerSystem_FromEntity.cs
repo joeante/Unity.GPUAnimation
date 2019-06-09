@@ -42,7 +42,7 @@ public class SpawnerSystem_FromEntity : JobComponentSystem
 
                     // Place the instantiated in a grid with some noise
                     var position = math.transform(location.Value,
-                        new float3(x * 1.3F, noise.cnoise(new float2(x, y) * 0.21F) * 2, y * 1.3F));
+                        new float3(x * 0.7F, noise.cnoise(new float2(x, y) * 0.21F) * 2, y * 0.7F));
                     CommandBuffer.SetComponent(index, instance, new Translation {Value = position});
                 }
             }
