@@ -8,12 +8,13 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace GPUAnimPackage
 {
 	struct AnimationState : IComponentData
 	{
-		public float NormalizedTime;
+		public float Time;
 		public int   AnimationClipIndex;
 		
 		public BlobAssetReference<BakedAnimationClipSet> AnimationClipSet;
@@ -67,6 +68,15 @@ namespace GPUAnimPackage
 				
 			return texturePositionData;
 		}
+		
+		public float ComputeNormalizedTime(float time)
+		{
+			if (Looping)
+				return Mathf.Repeat(time, AnimationLength) / AnimationLength;
+			else
+				return math.saturate(time / AnimationLength);
+		}
+
 	}
 
 	struct RenderCharacter : ISharedComponentData, IEquatable<RenderCharacter>
@@ -125,7 +135,7 @@ namespace GPUAnimPackage
 
 	public class SimpleAnim : JobComponentSystem
 	{
-		[BurstCompile]
+		//[BurstCompile]
 		struct SimpleAnimJob : IJobForEach<AnimationState>
 		{
 			public float DeltaTime;
@@ -135,7 +145,7 @@ namespace GPUAnimPackage
 				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
 				{
 					var length = clips[animstate.AnimationClipIndex].AnimationLength;
-					animstate.NormalizedTime = Mathf.Repeat(animstate.NormalizedTime + DeltaTime / length, 1.0F);
+					animstate.Time += DeltaTime;
 				}
 				else
 				{
@@ -161,7 +171,8 @@ namespace GPUAnimPackage
 				ref var clips = ref animstate.AnimationClipSet.Value.Clips;
 				if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
 				{
-					textureCoordinate.Coordinate = clips[animstate.AnimationClipIndex].ComputeCoordinate(animstate.NormalizedTime);
+					var normalizedTime = clips[animstate.AnimationClipIndex].ComputeNormalizedTime(animstate.Time);
+					textureCoordinate.Coordinate = clips[animstate.AnimationClipIndex].ComputeCoordinate(normalizedTime);
 				}
 				else
 				{
@@ -195,6 +206,8 @@ namespace GPUAnimPackage
 	        {
 		        if (character.Material == null || character.Mesh == null)
 			        continue;
+		        
+		        //@TODO: Currently we never cleanup the _Drawers cache when the last entity with that renderer disappears.
 		        InstancedSkinningDrawer drawer;
 		        if (!_Drawers.TryGetValue(character, out drawer))
 		        {
@@ -202,7 +215,7 @@ namespace GPUAnimPackage
 			        _Drawers.Add(character, drawer);
 		        }
 		        
-		        m_Characters.SetFilter(character);
+				m_Characters.SetFilter(character);
 
 		        var coords = m_Characters.ToComponentDataArray<AnimationTextureCoordinate>(Allocator.TempJob);
 		        var localToWorld = m_Characters.ToComponentDataArray<LocalToWorld>(Allocator.TempJob);

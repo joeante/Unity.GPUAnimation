@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GPUAnimPackage
 {
-	public class ConvertCharacter : MonoBehaviour
+	public class GPUCharacterSlow : MonoBehaviour
 	{
 		public Material Material;
 		public GameObject CharacterRig;
