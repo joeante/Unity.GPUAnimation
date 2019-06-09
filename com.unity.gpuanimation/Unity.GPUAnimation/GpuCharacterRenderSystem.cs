@@ -14,7 +14,6 @@ namespace Unity.GPUAnimation
 {
 	public struct GPUAnimationState : IComponentData
 	{
-		public bool  FirstFrame;
 		public float Time;
 		public int   AnimationClipIndex;
 		

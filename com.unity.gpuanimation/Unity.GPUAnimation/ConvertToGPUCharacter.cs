@@ -38,7 +38,6 @@ namespace Unity.GPUAnimation
 
 			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
-			animState.FirstFrame = true;
 			manager.AddComponentData(entity, animState);
 			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
 

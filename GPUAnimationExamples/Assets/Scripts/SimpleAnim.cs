@@ -3,37 +3,43 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 using Unity.GPUAnimation;
-
+using Unity.Mathematics;
 
 struct SimpleAnim : IComponentData
 {
+    public bool IsFirstFrame;
+    public bool RandomizeStartTime;
 }
 
 public class SimpleAnimSystem : JobComponentSystem
 {
     [BurstCompile]
-    [RequireComponentTag(typeof(SimpleAnim))]
-    struct SimpleAnimJob : IJobForEach<GPUAnimationState>
+    struct SimpleAnimJob : IJobForEachWithEntity<SimpleAnim, GPUAnimationState>
     {
         public float DeltaTime;
-        public void Execute(ref GPUAnimationState animstate)
+        public void Execute(Entity entity, int index, ref SimpleAnim simple, ref GPUAnimationState animstate)
         {
             ref var clips = ref animstate.AnimationClipSet.Value.Clips;
             if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
             {
-                if (!animstate.FirstFrame)
+                if (!simple.IsFirstFrame)
                 {
-                    var length = clips[animstate.AnimationClipIndex].AnimationLength;
                     animstate.Time += DeltaTime;
                 }
                 else
                 {
-                    animstate.FirstFrame = false;
+                    var length = 10.0F;
+
+                    var random = new Unity.Mathematics.Random((uint)(index + 1) ^ 323233283 );
+                    if (simple.RandomizeStartTime)
+                        animstate.Time = random.NextFloat(0, length);
+                    
+                    simple.IsFirstFrame = false;
                 }
             }
             else
             {
-                // How to warn???
+                // @TODO: Warnings?
             }
         }
     }
