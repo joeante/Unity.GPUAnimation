@@ -23,8 +23,7 @@ https://www.youtube.com/watch?v=0969LalB7vw
 # TODO / Known issues:
 * The conversion pipeline currently creates an entity with transform hierarchy components for each bone in the hierarchy below the character. In this case none of it is used and it is simply wasted. This makes instantiation slow and causes massive overhead at runtime to keep all these unused transform nodes up to date... I'll make changes to the conversion pipeline to support proper stripping of unused entities.
 * Currently no frustum culling
-* HDRP / LWRP is not supported at the moment. Lets create a custom code shader graph node that works with both HDRP & LWRP.
-* Shader only works in Deferred mode
+* HDRP is not supported at the moment. Lets create a custom code shader graph node that works with both HDRP & LWRP.
 * Make more interesting example that use walk / attack / die animation clips
 * Support for blending two animation clips
 * Bake MeshRenderer based attachments into the skin mesh
