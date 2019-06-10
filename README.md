@@ -2,7 +2,7 @@
 
 Simple but very fast GPU vertex shader based animation system for Unity.Entities
 
-The animationclip is converted to three textures that are sampled per vertex. All animation curves are converted to world space.
+The animationclip is converted to three textures that are sampled per vertex. Performing per vertex 2 bone skinning. All animation curves are converted to world space when baked into the texture, thus no local to world space transformation is required and all sampling can be performed directly in the vertex shader.
 
 NOTE: This is not intended to be used or extended as a complete animation system. It is specifically made for the case of animating massive amounts of characters where each character has unique animation but the animation state is trivial. Specifically animations can't be blended. Only one clip can be played at a time per character.
 
