@@ -12,8 +12,8 @@ This code is based on the Nordeus / Unity collaboration. I took the core code fr
 https://www.youtube.com/watch?v=0969LalB7vw
 
 # Advantages:
-* The state to transfer to GPU is 12 bytes per character for the animation state + 64 bytes for the local to world matrix. Thus the CPU cost is incredibly low.
-* All animation clip sampling work happens in the vertex shader. Thus the GPU cost can easily be scaled by providing skinned mesh LODs with fewer vertices
+* The state to transfer to GPU is 12 bytes per character for the animation state + 64 bytes for the local to world matrix. The CPU cost is incredibly low, it is simply transferring the 76 byte animation state.
+* All animation clip sampling work happens in the vertex shader. The GPU cost can easily be scaled by providing skinned mesh LODs with fewer vertices, bone LOD is implicit in this approach.
 
 # Disadvantages
 * Currently you can only play one clip at a time (With additional work it might be possible to add support for two blendable clips)
