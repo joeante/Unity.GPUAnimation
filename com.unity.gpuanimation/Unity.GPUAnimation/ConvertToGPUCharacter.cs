@@ -45,7 +45,10 @@ namespace Unity.GPUAnimation
 			{
 				Material = renderer.sharedMaterial,
 				AnimationTexture = bakedData.AnimationTextures,
-				Mesh = bakedData.NewMesh
+				Mesh = bakedData.NewMesh,
+				ReceiveShadows = renderer.receiveShadows,
+				CastShadows = renderer.shadowCastingMode
+				
 			};
 			manager.AddSharedComponentData(entity, renderCharacter);
 		}

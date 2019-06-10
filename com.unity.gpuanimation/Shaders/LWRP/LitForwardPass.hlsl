@@ -3,14 +3,16 @@
 
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
 
+
+
+
 struct Attributes
 {
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float4 tangentOS    : TANGENT;
     float2 texcoord     : TEXCOORD0;
-    float2 boneIds      : TEXCOORD1;
-    float2 boneInfluences : TEXCOORD2;
+    UNITY_VERTEX_INPUT_GPUANIMATION
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
@@ -88,8 +90,11 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+    VertexPositionInputs vertexInput = GetVertexPositionInputs_GPUAnimation(input.positionOS.xyz, input.boneIds, input.boneInfluences);
+    VertexNormalInputs normalInput = GetVertexNormalInputs_GPUAnimation(input.normalOS, input.tangentOS, input.boneIds, input.boneInfluences);
+
+
     half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
     half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);

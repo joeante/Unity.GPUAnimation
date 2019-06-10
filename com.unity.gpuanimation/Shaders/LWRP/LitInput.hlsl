@@ -4,6 +4,7 @@
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/SurfaceInput.hlsl"
+#include "Packages/com.unity.gpuanimation/Shaders/GPUAnimationLWRP.hlsl"
 
 CBUFFER_START(UnityPerMaterial)
 float4 _BaseMap_ST;
@@ -20,17 +21,6 @@ CBUFFER_END
 TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
 TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
 TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
-
-sampler2D _AnimationTexture0;
-sampler2D _AnimationTexture1;
-sampler2D _AnimationTexture2;
-
-
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-StructuredBuffer<float4x4> objectToWorldBuffer;
-StructuredBuffer<float3>   textureCoordinatesBuffer;
-#endif
-
 
 #ifdef _SPECULAR_SETUP
     #define SAMPLE_METALLICSPECULAR(uv) SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, uv)

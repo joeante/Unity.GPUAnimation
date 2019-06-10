@@ -51,7 +51,7 @@ namespace Unity.GPUAnimation
             if (textureCoordinatesBuffer != null) textureCoordinatesBuffer.Dispose();
         }
         
-        public void Draw(NativeArray<float3> TextureCoordinates, NativeArray<float4x4> ObjectToWorld)
+        public void Draw(NativeArray<float3> TextureCoordinates, NativeArray<float4x4> ObjectToWorld, ShadowCastingMode shadowCastingMode, bool receiveShadows)
         {
             // CHECK: Systems seem to be called when exiting playmode once things start getting destroyed, such as the mesh here.
             if (mesh == null || material == null) 
@@ -88,7 +88,7 @@ namespace Unity.GPUAnimation
             indirectArgs[1] = (uint)count;
             argsBuffer.SetData(indirectArgs);
 
-            Graphics.DrawMeshInstancedIndirect(mesh, 0, material, new Bounds(Vector3.zero, 1000000 * Vector3.one), argsBuffer, 0, new MaterialPropertyBlock(), ShadowCastingMode.Off, true);
+            Graphics.DrawMeshInstancedIndirect(mesh, 0, material, new Bounds(Vector3.zero, 1000000 * Vector3.one), argsBuffer, 0, new MaterialPropertyBlock(), shadowCastingMode, receiveShadows);
         }
     }
 }

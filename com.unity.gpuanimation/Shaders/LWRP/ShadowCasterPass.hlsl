@@ -11,6 +11,7 @@ struct Attributes
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float2 texcoord     : TEXCOORD0;
+    UNITY_VERTEX_INPUT_GPUANIMATION
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -22,8 +23,9 @@ struct Varyings
 
 float4 GetShadowPositionHClip(Attributes input)
 {
-    float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-    float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+    float3 positionWS = TransformObjectToWorld_GPUAnimation_Shadow(input.positionOS.xyz, input.boneIds, input.boneInfluences);
+    
+    float3 normalWS = TransformObjectToWorldNormal_GPUAnimation_Shadow(input.normalOS, input.boneIds, input.boneInfluences);
 
     float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, _LightDirection));
 

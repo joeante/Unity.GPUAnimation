@@ -114,7 +114,8 @@ Shader "Lightweight Render Pipeline/Skinning Lit"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            
+            #pragma instancing_options procedural:setup_gpuanimation
+
             #pragma vertex LitPassVertex
             #pragma fragment LitPassFragment
 
@@ -145,6 +146,8 @@ Shader "Lightweight Render Pipeline/Skinning Lit"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
+            #pragma instancing_options procedural:setup_gpuanimation
+
             #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
             #pragma vertex ShadowPassVertex
@@ -152,68 +155,6 @@ Shader "Lightweight Render Pipeline/Skinning Lit"
 
             #include "LitInput.hlsl"
             #include "ShadowCasterPass.hlsl"
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
-
-            ZWrite On
-            ColorMask 0
-            Cull[_Cull]
-
-            HLSLPROGRAM
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
-
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
-
-            // -------------------------------------
-            // Material Keywords
-            #pragma shader_feature _ALPHATEST_ON
-            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-            //--------------------------------------
-            // GPU Instancing
-            #pragma multi_compile_instancing
-
-            #include "LitInput.hlsl"
-            #include "DepthOnlyPass.hlsl"
-            ENDHLSL
-        }
-
-        // This pass it not used during regular rendering, only for lightmap baking.
-        Pass
-        {
-            Name "Meta"
-            Tags{"LightMode" = "Meta"}
-
-            Cull Off
-
-            HLSLPROGRAM
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex LightweightVertexMeta
-            #pragma fragment LightweightFragmentMeta
-
-            #pragma shader_feature _SPECULAR_SETUP
-            #pragma shader_feature _EMISSION
-            #pragma shader_feature _METALLICSPECGLOSSMAP
-            #pragma shader_feature _ALPHATEST_ON
-            #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-            #pragma shader_feature _SPECGLOSSMAP
-
-            #include "LitInput.hlsl"
-            #include "LitMetaPass.hlsl"
-
             ENDHLSL
         }
 
