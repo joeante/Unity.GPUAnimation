@@ -302,6 +302,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc4ea44c6d2bb4266a2686f610db3a52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  RandomizeStartTime: 0
+  ClipIndex: 0
 --- !u!1001 &614850790
 PrefabInstance:
   m_ObjectHideFlags: 0

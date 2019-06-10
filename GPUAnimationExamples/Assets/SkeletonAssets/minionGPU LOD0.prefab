@@ -29,6 +29,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RandomizeStartTime: 1
+  ClipIndex: 0
 --- !u!1001 &690739406792008271
 PrefabInstance:
   m_ObjectHideFlags: 0

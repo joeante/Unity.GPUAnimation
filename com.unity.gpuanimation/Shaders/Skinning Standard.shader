@@ -122,12 +122,6 @@ Shader "Skinning Standard"
 	#endif
 			}
 
-			inline float4 QuaternionMul(float4 v, float4 q)
-			{
-				v = float4(v + 2 * cross(q.xyz, cross(q.xyz, v.xyz) + q.w * v), v.w);
-				return v;
-			}
-
 			struct VertexInputSkinning
 			{
 				float4 vertex   : POSITION;
@@ -170,15 +164,16 @@ Shader "Skinning Standard"
 	#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 				float3 animationTextureCoords = textureCoordinatesBuffer[unity_InstanceID];
 
-				float4x4 firstBoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.x);
-				float4x4 firstBoneMatrix1 = CreateMatrix(animationTextureCoords.y, v.boneIds.x);
-				float4x4 firstBoneMatrix = firstBoneMatrix0 * (1 - animationTextureCoords.z) + firstBoneMatrix1 * animationTextureCoords.z;
+                // We interpolate between two matrices
+				float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.x);
+				float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, v.boneIds.x);
+				float4x4 frame0_BoneMatrix = frame0_BoneMatrix0 * (1 - animationTextureCoords.z) + frame0_BoneMatrix1 * animationTextureCoords.z;
 
-				float4x4 secondBoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.y);
-				float4x4 secondBoneMatrix1 = CreateMatrix(animationTextureCoords.y, v.boneIds.y);
-				float4x4 secondBoneMatrix = secondBoneMatrix0 * (1 - animationTextureCoords.z) + secondBoneMatrix1 * animationTextureCoords.z;
+				float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.y);
+				float4x4 frame1_BoneMatrix1= CreateMatrix(animationTextureCoords.y, v.boneIds.y);
+				float4x4 frame1_BoneMatrix = frame1_BoneMatrix0 * (1 - animationTextureCoords.z) + frame1_BoneMatrix1 * animationTextureCoords.z;
 
-				float4x4 combinedMatrix = mul(objectToWorldBuffer[unity_InstanceID], firstBoneMatrix * v.boneInfluences.x + secondBoneMatrix * v.boneInfluences.y);
+				float4x4 combinedMatrix = mul(objectToWorldBuffer[unity_InstanceID], frame0_BoneMatrix * v.boneInfluences.x + frame1_BoneMatrix * v.boneInfluences.y);
 
 				float4 posWorld = mul(combinedMatrix, v.vertex);
 

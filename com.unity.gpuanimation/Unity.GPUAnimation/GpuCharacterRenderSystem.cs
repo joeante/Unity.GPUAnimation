@@ -61,9 +61,13 @@ namespace Unity.GPUAnimation
 			float texturePosition = normalizedTime * TextureRange + TextureOffset;
 			float lowerPixelFloor = math.floor(texturePosition * TextureWidth);
 
-			float lowerPixelCenter = (lowerPixelFloor * 1.0f) / TextureWidth;
+			float lowerPixelCenter = lowerPixelFloor / TextureWidth;
 			float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
 			float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
+
+			lowerPixelCenter -= OnePixelOffset * 0.5F;
+			upperPixelCenter -= OnePixelOffset * 0.5F;
+			
 			float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
 				
 			return texturePositionData;

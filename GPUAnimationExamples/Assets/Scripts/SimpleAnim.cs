@@ -7,10 +7,13 @@ using Unity.Mathematics;
 
 struct SimpleAnim : IComponentData
 {
+    public int  ClipIndex;
     public bool IsFirstFrame;
     public bool RandomizeStartTime;
 }
 
+[UpdateInGroup(typeof(PresentationSystemGroup))]
+[UpdateBefore(typeof(CalculateTextureCoordinateSystem))]
 public class SimpleAnimSystem : JobComponentSystem
 {
     [BurstCompile]
@@ -19,6 +22,8 @@ public class SimpleAnimSystem : JobComponentSystem
         public float DeltaTime;
         public void Execute(Entity entity, int index, ref SimpleAnim simple, ref GPUAnimationState animstate)
         {
+            animstate.AnimationClipIndex = simple.ClipIndex;
+
             ref var clips = ref animstate.AnimationClipSet.Value.Clips;
             if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
             {
