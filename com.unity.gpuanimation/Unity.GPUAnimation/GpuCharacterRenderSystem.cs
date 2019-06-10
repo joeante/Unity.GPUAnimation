@@ -34,10 +34,12 @@ namespace Unity.GPUAnimation
 
 	public struct BakedAnimationClip
 	{
-		public float TextureOffset;
-		public float TextureRange;
-		public float OnePixelOffset;
-		public float TextureWidth;
+		internal float TextureOffset;
+		internal float TextureRange;
+		internal float OnePixelOffset;
+		internal float TextureWidth;
+		internal float OneOverTextureWidth;
+		internal float OneOverPixelOffset;
 
 		public float AnimationLength;
 		public bool  Looping;
@@ -52,7 +54,9 @@ namespace Unity.GPUAnimation
 			TextureRange = end - start;
 			OnePixelOffset = onePixel;
 			TextureWidth = animTextures.Animation0.width;
-
+			OneOverTextureWidth = 1.0F / TextureWidth;
+			OneOverPixelOffset = 1.0F / OnePixelOffset;
+			
 			AnimationLength = clipData.Clip.length;
 			Looping = clipData.Clip.wrapMode == WrapMode.Loop;
 		}
@@ -62,13 +66,11 @@ namespace Unity.GPUAnimation
 			float texturePosition = normalizedTime * TextureRange + TextureOffset;
 			float lowerPixelFloor = math.floor(texturePosition * TextureWidth);
 
-			float lowerPixelCenter = lowerPixelFloor / TextureWidth;
+			float lowerPixelCenter = lowerPixelFloor * OneOverTextureWidth;
 			float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
-			float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
+			float lerpFactor = (texturePosition - lowerPixelCenter) * OneOverPixelOffset;
 
-			float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
-				
-			return texturePositionData;
+			return  new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
 		}
 		
 		public float ComputeNormalizedTime(float time)
