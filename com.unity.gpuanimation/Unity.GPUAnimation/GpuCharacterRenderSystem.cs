@@ -44,8 +44,8 @@ namespace Unity.GPUAnimation
 		public BakedAnimationClip(AnimationTextures animTextures, KeyframeTextureBaker.AnimationClipData clipData)
 		{
 			float onePixel = 1f / animTextures.Animation0.width;
-			float start = (float)clipData.PixelStart / animTextures.Animation0.width + onePixel * 0.5f;
-			float end = (float)clipData.PixelEnd / animTextures.Animation0.width + onePixel * 0.5f;
+			float start = (float)clipData.PixelStart / animTextures.Animation0.width;
+			float end = (float)clipData.PixelEnd / animTextures.Animation0.width;
 
 			TextureOffset = start;
 			TextureRange = end - start;
@@ -65,9 +65,6 @@ namespace Unity.GPUAnimation
 			float upperPixelCenter = lowerPixelCenter + OnePixelOffset;
 			float lerpFactor = (texturePosition - lowerPixelCenter) / OnePixelOffset;
 
-			lowerPixelCenter -= OnePixelOffset * 0.5F;
-			upperPixelCenter -= OnePixelOffset * 0.5F;
-			
 			float3 texturePositionData = new float3(lowerPixelCenter, upperPixelCenter, lerpFactor);
 				
 			return texturePositionData;

@@ -8,6 +8,7 @@ using Unity.Mathematics;
 struct SimpleAnim : IComponentData
 {
     public int  ClipIndex;
+    public float Speed;
     public bool IsFirstFrame;
     public bool RandomizeStartTime;
 }
@@ -29,7 +30,7 @@ public class SimpleAnimSystem : JobComponentSystem
             {
                 if (!simple.IsFirstFrame)
                 {
-                    animstate.Time += DeltaTime;
+                    animstate.Time += DeltaTime * simple.Speed;
                 }
                 else
                 {

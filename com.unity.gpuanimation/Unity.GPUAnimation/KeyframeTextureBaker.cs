@@ -54,7 +54,7 @@ namespace Unity.GPUAnimation
 			public int PixelEnd;
 		}
 
-		public static BakedData BakeClips(GameObject animationRoot, AnimationClip[] animationClips, LodData lods)
+		public static BakedData BakeClips(GameObject animationRoot, AnimationClip[] animationClips, float framerate, LodData lods)
 		{
 			var skinRenderers = animationRoot.GetComponentsInChildren<SkinnedMeshRenderer>();
 			if (skinRenderers.Length != 1)
@@ -79,7 +79,7 @@ namespace Unity.GPUAnimation
 			var lod3Mesh = CreateMesh(skinRenderer, lods.Lod3Mesh);
 			bakedData.lods = new LodData(lod1Mesh, lod2Mesh, lod3Mesh, lods.Lod1Distance, lods.Lod2Distance, lods.Lod3Distance);
 
-			bakedData.Framerate = 60f;
+			bakedData.Framerate = framerate;
 
 			var sampledBoneMatrices = new List<Matrix4x4[,]>();
 

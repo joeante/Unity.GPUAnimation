@@ -19,7 +19,7 @@ namespace Unity.GPUAnimation
 			}
 		}
 
-		public static void AddCharacterComponents(EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips)
+		public static void AddCharacterComponents(EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
 			var renderer = characterRig.GetComponentInChildren<SkinnedMeshRenderer>();
 			
@@ -34,7 +34,7 @@ namespace Unity.GPUAnimation
 			};
 
 			//@TODO: Perform validation that the shader supports GPU Skinning mode
-			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, lod);
+			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, framerate, lod);
 
 			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
@@ -53,10 +53,11 @@ namespace Unity.GPUAnimation
     public class ConvertToGPUCharacter : MonoBehaviour, IConvertGameObjectToEntity
     {
 		public AnimationClip[] Clips;
-        
+		public float Framerate = 60.0F;
+		
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
-            CharacterUtility.AddCharacterComponents(dstManager, entity, gameObject, Clips);
+            CharacterUtility.AddCharacterComponents(dstManager, entity, gameObject, Clips, Framerate);
         }
     }
 }
