@@ -93,16 +93,7 @@ Shader "Skinning Standard"
 			#pragma instancing_options procedural:setup
 
             #include "UnityStandardCore.cginc"
-
-			sampler2D _AnimationTexture0;
-			sampler2D _AnimationTexture1;
-			sampler2D _AnimationTexture2;
-
-
-	#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-			StructuredBuffer<float4x4> objectToWorldBuffer;
-			StructuredBuffer<float3>   textureCoordinatesBuffer;
-	#endif
+            #include "Packages/com.unity.gpuanimation/Shaders/GPUAnimation.hlsl"
 
 			void setup()
 			{
@@ -127,8 +118,7 @@ Shader "Skinning Standard"
 				float4 vertex   : POSITION;
 				half3 normal    : NORMAL;
 				float2 uv0      : TEXCOORD0;
-				float2 boneIds  : TEXCOORD1;
-				float2 boneInfluences : TEXCOORD2;
+				UNITY_VERTEX_INPUT_GPUANIMATION
 	#ifdef _TANGENT_TO_WORLD
 				half4 tangent   : TANGENT;
 	#endif
@@ -141,32 +131,6 @@ Shader "Skinning Standard"
 				texcoord.xy = TRANSFORM_TEX(v.uv0, _MainTex); // Always source from uv0
 				texcoord.zw = TRANSFORM_TEX(((_UVSec == 0) ? v.uv0 : v.boneIds), _DetailAlbedoMap);
 				return texcoord;
-			}
-
-			//@TODO: use 4x3 matrix
-			inline float4x4 CreateMatrix(float texturePosition, float boneId)
-			{
-				float4 row0 = tex2Dlod(_AnimationTexture0, float4(texturePosition, boneId, 0, 0));
-				float4 row1 = tex2Dlod(_AnimationTexture1, float4(texturePosition, boneId, 0, 0));
-				float4 row2 = tex2Dlod(_AnimationTexture2, float4(texturePosition, boneId, 0, 0));
-
-				float4x4 reconstructedMatrix = float4x4(row0, row1, row2, float4(0, 0, 0, 1));
-
-				return reconstructedMatrix;
-			}
-
-			inline float4x4 CalculateSkinMatrix(float3 animationTextureCoords, float2 boneIds, float2 boneInfluences)
-			{
-				// We interpolate between two matrices
-				float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.x);
-				float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, boneIds.x);
-				float4x4 frame0_BoneMatrix = frame0_BoneMatrix0 * (1 - animationTextureCoords.z) + frame0_BoneMatrix1 * animationTextureCoords.z;
-
-				float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.y);
-				float4x4 frame1_BoneMatrix1= CreateMatrix(animationTextureCoords.y, boneIds.y);
-				float4x4 frame1_BoneMatrix = frame1_BoneMatrix0 * (1 - animationTextureCoords.z) + frame1_BoneMatrix1 * animationTextureCoords.z;
-
-				return frame0_BoneMatrix * boneInfluences.x + frame1_BoneMatrix * boneInfluences.y;
 			}
 
 			VertexOutputDeferred vertDeferredSkinning(VertexInputSkinning v)

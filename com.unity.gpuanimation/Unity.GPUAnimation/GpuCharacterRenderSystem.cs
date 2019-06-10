@@ -9,6 +9,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.Rendering;
 
 namespace Unity.GPUAnimation
 {
@@ -86,10 +87,12 @@ namespace Unity.GPUAnimation
 		public Material                                  Material;
 		public AnimationTextures                         AnimationTexture;
 		public Mesh                                      Mesh;
+		public bool                                      ReceiveShadows;
+		public ShadowCastingMode                         CastShadows;
 		
 		public bool Equals(RenderCharacter other)
 		{
-			return Equals(Material, other.Material) && AnimationTexture.Equals(other.AnimationTexture) && Equals(Mesh, other.Mesh);
+			return Material == other.Material && AnimationTexture.Equals(other.AnimationTexture) && Mesh == other.Mesh && ReceiveShadows == other.ReceiveShadows && CastShadows == other.CastShadows;
 		}
 
 		public override int GetHashCode()
@@ -198,7 +201,7 @@ namespace Unity.GPUAnimation
 		        JobHandle.CompleteAll(ref jobA, ref jobB);
 		        Profiler.EndSample();
 		        
-		        drawer.Draw(coords.Reinterpret_Temp<AnimationTextureCoordinate, float3>(), localToWorld.Reinterpret_Temp<LocalToWorld, float4x4>());
+		        drawer.Draw(coords.Reinterpret_Temp<AnimationTextureCoordinate, float3>(), localToWorld.Reinterpret_Temp<LocalToWorld, float4x4>(), character.CastShadows, character.ReceiveShadows);
 		        
 		        coords.Dispose();
 		        localToWorld.Dispose();
@@ -211,7 +214,6 @@ namespace Unity.GPUAnimation
         {
 	        m_Characters = GetEntityQuery(ComponentType.ReadOnly<RenderCharacter>(), ComponentType.ReadOnly<GPUAnimationState>(), ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<AnimationTextureCoordinate>());
         }
-
 
         protected override void OnDestroy()
         {
