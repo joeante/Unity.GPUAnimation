@@ -26,6 +26,7 @@ https://www.youtube.com/watch?v=0969LalB7vw
 * HDRP / LWRP is not supported at the moment. Lets create a custom code shader graph node that works with both HDRP & LWRP.
 * Shader only works in Deferred mode
 * Make more interesting example that use walk / attack / die animation clips
-* Support for blending animation clips
+* Support for blending two animation clips
 * Bake MeshRenderer based attachments into the skin mesh
 * Bake into a single large texture with all 3 curve data samples next to each other for cache locality
+* Fix low frame rate issue with looping clips (LastFrameLoopBug.unity scene)
