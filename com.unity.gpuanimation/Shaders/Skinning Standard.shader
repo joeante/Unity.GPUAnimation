@@ -143,6 +143,7 @@ Shader "Skinning Standard"
 				return texcoord;
 			}
 
+			//@TODO: use 4x3 matrix
 			inline float4x4 CreateMatrix(float texturePosition, float boneId)
 			{
 				float4 row0 = tex2Dlod(_AnimationTexture0, float4(texturePosition, boneId, 0, 0));
@@ -154,6 +155,20 @@ Shader "Skinning Standard"
 				return reconstructedMatrix;
 			}
 
+			inline float4x4 CalculateSkinMatrix(float3 animationTextureCoords, float2 boneIds, float2 boneInfluences)
+			{
+				// We interpolate between two matrices
+				float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.x);
+				float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, boneIds.x);
+				float4x4 frame0_BoneMatrix = frame0_BoneMatrix0 * (1 - animationTextureCoords.z) + frame0_BoneMatrix1 * animationTextureCoords.z;
+
+				float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.y);
+				float4x4 frame1_BoneMatrix1= CreateMatrix(animationTextureCoords.y, boneIds.y);
+				float4x4 frame1_BoneMatrix = frame1_BoneMatrix0 * (1 - animationTextureCoords.z) + frame1_BoneMatrix1 * animationTextureCoords.z;
+
+				return frame0_BoneMatrix * boneInfluences.x + frame1_BoneMatrix * boneInfluences.y;
+			}
+
 			VertexOutputDeferred vertDeferredSkinning(VertexInputSkinning v)
 			{
 				UNITY_SETUP_INSTANCE_ID(v);
@@ -162,18 +177,7 @@ Shader "Skinning Standard"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
 	#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-				float3 animationTextureCoords = textureCoordinatesBuffer[unity_InstanceID];
-
-                // We interpolate between two matrices
-				float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.x);
-				float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, v.boneIds.x);
-				float4x4 frame0_BoneMatrix = frame0_BoneMatrix0 * (1 - animationTextureCoords.z) + frame0_BoneMatrix1 * animationTextureCoords.z;
-
-				float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, v.boneIds.y);
-				float4x4 frame1_BoneMatrix1= CreateMatrix(animationTextureCoords.y, v.boneIds.y);
-				float4x4 frame1_BoneMatrix = frame1_BoneMatrix0 * (1 - animationTextureCoords.z) + frame1_BoneMatrix1 * animationTextureCoords.z;
-
-				float4x4 combinedMatrix = mul(objectToWorldBuffer[unity_InstanceID], frame0_BoneMatrix * v.boneInfluences.x + frame1_BoneMatrix * v.boneInfluences.y);
+				float4x4 combinedMatrix = mul(objectToWorldBuffer[unity_InstanceID], CalculateSkinMatrix(textureCoordinatesBuffer[unity_InstanceID], v.boneIds, v.boneInfluences));
 
 				float4 posWorld = mul(combinedMatrix, v.vertex);
 
