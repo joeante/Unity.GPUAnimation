@@ -97,7 +97,7 @@ LightmapSettings:
     m_ShowResolutionOverlay: 1
     m_ExportTrainingData: 0
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 1
+  m_UseShadowmask: 0
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -411,9 +411,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc4ea44c6d2bb4266a2686f610db3a52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 0.1
   RandomizeStartTime: 0
   ClipIndex: 0
+  RandomzeMinMaxSpeed:
+    x: 0.1
+    y: 0.1
 --- !u!114 &1049733309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -717,9 +719,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc4ea44c6d2bb4266a2686f610db3a52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 0.1
   RandomizeStartTime: 0
   ClipIndex: 0
+  RandomzeMinMaxSpeed:
+    x: 0.1
+    y: 0.1
 --- !u!1001 &1859732371
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -812,9 +816,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc4ea44c6d2bb4266a2686f610db3a52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 0.1
   RandomizeStartTime: 0
   ClipIndex: 0
+  RandomzeMinMaxSpeed:
+    x: 0.1
+    y: 0.1
 --- !u!1001 &1973697958
 PrefabInstance:
   m_ObjectHideFlags: 0

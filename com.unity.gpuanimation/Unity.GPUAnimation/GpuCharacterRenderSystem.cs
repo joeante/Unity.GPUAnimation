@@ -83,6 +83,7 @@ namespace Unity.GPUAnimation
 
 	}
 
+	[System.Serializable]
 	struct RenderCharacter : ISharedComponentData, IEquatable<RenderCharacter>
 	{
 		//@TODO: Would be nice if we had BlobAssetReference in shared component data support (Serialize not supported...) 

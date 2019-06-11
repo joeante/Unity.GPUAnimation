@@ -11,6 +11,7 @@ struct SimpleAnim : IComponentData
     public float Speed;
     public bool IsFirstFrame;
     public bool RandomizeStartTime;
+    public float2 RandomizeMinMaxSpeed;
 }
 
 [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -36,9 +37,14 @@ public class SimpleAnimSystem : JobComponentSystem
                 {
                     var length = 10.0F;
 
-                    var random = new Unity.Mathematics.Random((uint)(index + 1) ^ 323233283 );
+                    var random = new Unity.Mathematics.Random((uint)index + 1);
+                    
+                    // For more variety randomize state more...
+                    random.NextInt();
+                    
                     if (simple.RandomizeStartTime)
                         animstate.Time = random.NextFloat(0, length);
+                    simple.Speed = random.NextFloat(simple.RandomizeMinMaxSpeed.x, simple.RandomizeMinMaxSpeed.y);
                     
                     simple.IsFirstFrame = false;
                 }
