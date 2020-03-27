@@ -26,6 +26,22 @@ real3 TransformObjectToWorldDir_CustomMatrix(float4x4 objectToWorld, real3 dirOS
     return normalize(mul((real3x3)objectToWorld, dirOS));
 }
 
+float4 TransformObjectToHClip_CustomMatrix(float4x4 objectToWorld, float3 positionOS)
+{
+    return mul(GetWorldToHClipMatrix(), mul(objectToWorld, float4(positionOS, 1.0)));
+}
+
+float4 TransformObjectToHClip_GPUAnimation(float3 positionOS, float2 boneIds, float2 boneInfluences)
+{
+#if !UNITY_ANY_INSTANCING_ENABLED
+    return TransformObjectToHClip(positionOS);
+#else
+
+    float4x4 skinMatrix = CalculateSkinMatrix(textureCoordinatesBuffer[unity_InstanceID], boneIds, boneInfluences);
+    return TransformObjectToHClip_CustomMatrix(mul(objectToWorldBuffer[unity_InstanceID], skinMatrix), positionOS);
+#endif    
+}
+
 float3 TransformObjectToWorld_GPUAnimation_Shadow(float3 positionOS, float2 boneIds, float2 boneInfluences)
 {
 #if !UNITY_ANY_INSTANCING_ENABLED

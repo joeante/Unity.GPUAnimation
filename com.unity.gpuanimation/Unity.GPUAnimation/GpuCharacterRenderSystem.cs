@@ -195,7 +195,7 @@ namespace Unity.GPUAnimation
 			        _Drawers.Add(character, drawer);
 		        }
 		        
-				m_Characters.SetFilter(character);
+		        m_Characters.SetSharedComponentFilter(character);
 
 				Profiler.BeginSample("ExtractState");
 				JobHandle jobA, jobB;
