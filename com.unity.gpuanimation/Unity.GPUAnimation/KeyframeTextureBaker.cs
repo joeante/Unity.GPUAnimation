@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = System.Object;
 
 
@@ -320,8 +321,16 @@ namespace Unity.GPUAnimation
 			newMesh.normals = originalMesh.normals;
 			newMesh.uv = originalMesh.uv;
 			newMesh.tangents = originalMesh.tangents;
+
+			newMesh.subMeshCount = originalMesh.subMeshCount;
+			for (int smi = 0; smi < originalMesh.subMeshCount; ++smi )
+			{
+				var sm = originalMesh.GetSubMesh(smi);
+				newMesh.SetSubMesh(smi, sm, MeshUpdateFlags.Default);
+			}
+
 			newMesh.name = originalMesh.name;
-		}
+		} 
 
 		private static float Distance(Color r1, Color r2)
 		{
