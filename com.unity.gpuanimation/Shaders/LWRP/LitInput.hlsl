@@ -1,9 +1,9 @@
-#ifndef LIGHTWEIGHT_LIT_INPUT_INCLUDED
-#define LIGHTWEIGHT_LIT_INPUT_INCLUDED
+#ifndef UNIVERSAL_LIT_INPUT_INCLUDED
+#define UNIVERSAL_LIT_INPUT_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/SurfaceInput.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 #include "Packages/com.unity.gpuanimation/Shaders/GPUAnimationLWRP.hlsl"
 
 CBUFFER_START(UnityPerMaterial)
@@ -93,4 +93,4 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
 }
 
-#endif // LIGHTWEIGHT_INPUT_SURFACE_PBR_INCLUDED
+#endif // UNIVERSAL_INPUT_SURFACE_PBR_INCLUDED

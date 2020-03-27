@@ -1,8 +1,8 @@
-#ifndef LIGHTWEIGHT_SHADOW_CASTER_PASS_INCLUDED
-#define LIGHTWEIGHT_SHADOW_CASTER_PASS_INCLUDED
+#ifndef UNIVERSAL_SHADOW_CASTER_PASS_INCLUDED
+#define UNIVERSAL_SHADOW_CASTER_PASS_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
-#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Shadows.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
 float3 _LightDirection;
 
@@ -24,7 +24,6 @@ struct Varyings
 float4 GetShadowPositionHClip(Attributes input)
 {
     float3 positionWS = TransformObjectToWorld_GPUAnimation_Shadow(input.positionOS.xyz, input.boneIds, input.boneInfluences);
-    
     float3 normalWS = TransformObjectToWorldNormal_GPUAnimation_Shadow(input.normalOS, input.boneIds, input.boneInfluences);
 
     float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, _LightDirection));
