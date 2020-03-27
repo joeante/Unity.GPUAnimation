@@ -11,7 +11,7 @@ namespace Unity.GPUAnimation
 			using (var builder = new BlobBuilder(Allocator.Temp))
 			{
 				ref var root = ref builder.ConstructRoot<BakedAnimationClipSet>();
-				var clips = builder.Allocate(data.Animations.Count, ref root.Clips);
+				var clips = builder.Allocate(ref root.Clips, data.Animations.Count);
 				for (int i = 0; i != data.Animations.Count; i++)
 					clips[i] = new BakedAnimationClip(data.AnimationTextures, data.Animations[i]);
 
@@ -43,7 +43,7 @@ namespace Unity.GPUAnimation
 
 			var renderCharacter = new RenderCharacter
 			{
-				Material = renderer.sharedMaterial,
+				Materials = renderer.sharedMaterials,
 				AnimationTexture = bakedData.AnimationTextures,
 				Mesh = bakedData.NewMesh,
 				ReceiveShadows = renderer.receiveShadows,

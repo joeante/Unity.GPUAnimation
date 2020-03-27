@@ -87,7 +87,7 @@ namespace Unity.GPUAnimation
 	struct RenderCharacter : ISharedComponentData, IEquatable<RenderCharacter>
 	{
 		//@TODO: Would be nice if we had BlobAssetReference in shared component data support (Serialize not supported...) 
-		public Material                                  Material;
+		public Material[]                                Materials;
 		public AnimationTextures                         AnimationTexture;
 		public Mesh                                      Mesh;
 		public bool                                      ReceiveShadows;
@@ -95,14 +95,29 @@ namespace Unity.GPUAnimation
 		
 		public bool Equals(RenderCharacter other)
 		{
-			return Material == other.Material && AnimationTexture.Equals(other.AnimationTexture) && Mesh == other.Mesh && ReceiveShadows == other.ReceiveShadows && CastShadows == other.CastShadows;
+			bool eq = AnimationTexture.Equals(other.AnimationTexture) && Mesh == other.Mesh && ReceiveShadows == other.ReceiveShadows && CastShadows == other.CastShadows;
+			if (Materials == null || other.Materials == null )
+			{
+				eq &= Materials == other.Materials;
+			}
+			else
+			{
+				for (int m = 0; m < Materials.Length && eq ; ++m )
+					eq &= Materials[m] == other.Materials[m];
+			}
+			return eq;
 		}
-
+		
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				var hashCode = (ReferenceEquals(Material, null) ? 0 : Material.GetHashCode());
+				int hashCode = 0;
+				if ( !ReferenceEquals( Materials, null ))
+				{
+					for (int m = 0; m < Materials.Length; ++m)
+						hashCode = (hashCode * 397) ^ Materials[m].GetHashCode();
+				}
 				hashCode = (hashCode * 397) ^ AnimationTexture.GetHashCode();
 				hashCode = (hashCode * 397) ^ (ReferenceEquals(Mesh, null) ? 0 : Mesh.GetHashCode());
 				return hashCode;
@@ -184,18 +199,18 @@ namespace Unity.GPUAnimation
 
 	        foreach (var character in _Characters)
 	        {
-		        if (character.Material == null || character.Mesh == null)
+		        if (character.Materials == null || character.Mesh == null || character.Materials[0] == null )
 			        continue;
 		        
 		        //@TODO: Currently we never cleanup the _Drawers cache when the last entity with that renderer disappears.
 		        InstancedSkinningDrawer drawer;
 		        if (!_Drawers.TryGetValue(character, out drawer))
 		        {
-			        drawer = new InstancedSkinningDrawer(character.Material, character.Mesh, character.AnimationTexture);
+			        drawer = new InstancedSkinningDrawer(character.Materials, character.Mesh, character.AnimationTexture);
 			        _Drawers.Add(character, drawer);
 		        }
 		        
-				m_Characters.SetFilter(character);
+				m_Characters.SetSharedComponentFilter(character);
 
 				Profiler.BeginSample("ExtractState");
 				JobHandle jobA, jobB;
