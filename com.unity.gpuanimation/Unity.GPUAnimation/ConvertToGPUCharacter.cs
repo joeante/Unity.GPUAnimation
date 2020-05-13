@@ -1,5 +1,7 @@
+using ICSharpCode.NRefactory.Ast;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.GPUAnimation
@@ -11,13 +13,14 @@ namespace Unity.GPUAnimation
 			using (var builder = new BlobBuilder(Allocator.Temp))
 			{
 				ref var root = ref builder.ConstructRoot<BakedAnimationClipSet>();
-				var clips = builder.Allocate(data.Animations.Count, ref root.Clips);
+				var clips = builder.Allocate(ref root.Clips, data.Animations.Count);
 				for (int i = 0; i != data.Animations.Count; i++)
 					clips[i] = new BakedAnimationClip(data.AnimationTextures, data.Animations[i]);
 
 				return builder.CreateBlobAssetReference<BakedAnimationClipSet>(Allocator.Persistent);
 			}
 		}
+		
 
 		public static void AddCharacterComponents(EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
@@ -53,14 +56,38 @@ namespace Unity.GPUAnimation
 			manager.AddSharedComponentData(entity, renderCharacter);
 		}
 	}
-    public class ConvertToGPUCharacter : MonoBehaviour, IConvertGameObjectToEntity
+    public class ConvertToGPUCharacter : MonoBehaviour
     {
 		public AnimationClip[] Clips;
 		public float Framerate = 60.0F;
-		
-        public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
-        {
-            CharacterUtility.AddCharacterComponents(dstManager, entity, gameObject, Clips, Framerate);
-        }
     }
+
+    [UpdateInGroup(typeof(GameObjectBeforeConversionGroup))]
+    class ConvertToGPUCharacterSystem : GameObjectConversionSystem
+    {
+	    override protected void OnCreate()
+	    {
+		    base.OnCreate();
+		    //Debug.Log("inti");
+	    }
+	    
+	    override protected void OnUpdate()
+	    {
+		    //@TODO: need to find a proper solution for this
+		    foreach (var system in World.Systems)
+		    {
+			    if (system.GetType().Name == "SkinnedMeshRendererConversion")
+			    {
+				    Debug.Log("Did Disable");
+				    system.Enabled = false;
+			    }
+		    }
+
+		    Entities.ForEach((ConvertToGPUCharacter character) =>
+		    {
+				CharacterUtility.AddCharacterComponents(DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
+		    });
+	    }
+    }
+
 }

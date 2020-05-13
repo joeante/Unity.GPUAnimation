@@ -36,3 +36,16 @@ inline float4x4 CalculateSkinMatrix(float3 animationTextureCoords, float2 boneId
 	return frame0_BoneMatrix * boneInfluences.x + frame1_BoneMatrix * boneInfluences.y;
 }
 
+inline void ApplySkinning_float(float3 Position, float3 Normal, float3 Tangent, float2 BoneIndex, float2 BoneWeight, float3 AnimationTextureCoords, out float3 OutPosition, out float3 OutNormal, out float3 OutTangent)
+{
+//    float4x4 skinMatrix = CalculateSkinMatrix(AnimationTextureCoords, BoneIndex, BoneWeight);
+
+  //  OutPosition = mul(skinMatrix, float4(Position, 1));
+//    OutNormal   = mul(skinMatrix, float4(Normal, 0));
+//    OutTangent  = mul(skinMatrix, float4(Tangent, 0));
+
+    OutPosition = Position;
+    OutNormal   = Normal;
+    OutTangent  = Tangent;
+
+}
