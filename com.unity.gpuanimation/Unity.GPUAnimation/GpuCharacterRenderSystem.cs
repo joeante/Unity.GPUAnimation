@@ -195,12 +195,12 @@ namespace Unity.GPUAnimation
 			        _Drawers.Add(character, drawer);
 		        }
 		        
-				m_Characters.SetFilter(character);
+		        m_Characters.SetSharedComponentFilter(character);
 
 				Profiler.BeginSample("ExtractState");
 				JobHandle jobA, jobB;
-		        var coords = m_Characters.ToComponentDataArray<AnimationTextureCoordinate>(Allocator.TempJob, out jobA);
-		        var localToWorld = m_Characters.ToComponentDataArray<LocalToWorld>(Allocator.TempJob, out jobB);
+		        var coords = m_Characters.ToComponentDataArrayAsync<AnimationTextureCoordinate>(Allocator.TempJob, out jobA);
+		        var localToWorld = m_Characters.ToComponentDataArrayAsync<LocalToWorld>(Allocator.TempJob, out jobB);
 		        JobHandle.CompleteAll(ref jobA, ref jobB);
 		        Profiler.EndSample();
 		        

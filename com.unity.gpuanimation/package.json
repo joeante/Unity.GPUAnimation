@@ -1,12 +1,12 @@
 {
   "name": "com.unity.gpuanimation",
   "displayName":"GPU based animation system",
-  "version": "0.0.1-preview.13",
+  "version": "0.5.0",
   "unity": "2019.1",
   "unityRelease": "0f1",
   "description": "Simple but very fast GPU vertex shader based animation system. The animationclip is converted to three textures that are sampled per vertex. All animation curves are converted to world space. NOTE: This is not intended to be used or extended as a complete animation system. It is specifically made for the case of animating massive amounts of characters where each character has unique animation but the animation state is trivial. Specifically animations can't be blended. Only one clip can be played at a time per character.",
   "dependencies": {
-    "com.unity.entities": "0.0.12-preview.33"
+    "com.unity.entities": "0.9.1-preview.15"
   },
 
   

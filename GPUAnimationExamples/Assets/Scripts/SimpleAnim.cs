@@ -58,6 +58,6 @@ public class SimpleAnimSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        return new SimpleAnimJob { DeltaTime = Time.deltaTime}.Schedule(this, inputDeps);
+        return new SimpleAnimJob { DeltaTime = Time.DeltaTime}.Schedule(this, inputDeps);
     }
 }
