@@ -3,7 +3,7 @@ sampler2D _AnimationTexture1;
 sampler2D _AnimationTexture2;
 
 StructuredBuffer<float4x4> objectToWorldBuffer;
-StructuredBuffer<float3>   textureCoordinatesBuffer;
+StructuredBuffer<float4>   textureCoordinatesBuffer;
 
 //@TODO: Use vertex skinning node
 #define UNITY_VERTEX_INPUT_GPUANIMATION float2 boneIds  : TEXCOORD1; float2 boneInfluences : TEXCOORD2; 
@@ -38,14 +38,9 @@ inline float4x4 CalculateSkinMatrix(float3 animationTextureCoords, float2 boneId
 
 inline void ApplySkinning_float(float3 Position, float3 Normal, float3 Tangent, float2 BoneIndex, float2 BoneWeight, float3 AnimationTextureCoords, out float3 OutPosition, out float3 OutNormal, out float3 OutTangent)
 {
-//    float4x4 skinMatrix = CalculateSkinMatrix(AnimationTextureCoords, BoneIndex, BoneWeight);
+    float4x4 skinMatrix = CalculateSkinMatrix(AnimationTextureCoords, BoneIndex, BoneWeight);
 
-  //  OutPosition = mul(skinMatrix, float4(Position, 1));
-//    OutNormal   = mul(skinMatrix, float4(Normal, 0));
-//    OutTangent  = mul(skinMatrix, float4(Tangent, 0));
-
-    OutPosition = Position;
-    OutNormal   = Normal;
-    OutTangent  = Tangent;
-
+    OutPosition = mul(skinMatrix, float4(Position, 1));
+    OutNormal   = mul(skinMatrix, float4(Normal, 0));
+    OutTangent  = mul(skinMatrix, float4(Tangent, 0));
 }

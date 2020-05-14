@@ -1,7 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
 using Unity.GPUAnimation;
 using Unity.Mathematics;
 
@@ -14,8 +13,7 @@ struct SimpleAnim : IComponentData
     public float2 RandomizeMinMaxSpeed;
 }
 
-[UpdateInGroup(typeof(PresentationSystemGroup))]
-[UpdateBefore(typeof(CalculateTextureCoordinateSystem))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public class SimpleAnimSystem : JobComponentSystem
 {
     [BurstCompile]

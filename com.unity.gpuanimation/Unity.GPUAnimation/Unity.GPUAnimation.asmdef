@@ -6,9 +6,9 @@
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Transforms",
-        "Unity.Burst"
+        "Unity.Burst",
+        "Unity.Rendering.Hybrid"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
@@ -16,5 +16,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

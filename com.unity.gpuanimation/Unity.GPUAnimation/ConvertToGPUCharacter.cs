@@ -1,13 +1,16 @@
-using ICSharpCode.NRefactory.Ast;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
-using UnityEditor;
+using Unity.Mathematics;
+using Unity.Rendering;
 using UnityEngine;
 
 namespace Unity.GPUAnimation
 {
 	public static class CharacterUtility
 	{
+		
+		
 		public static BlobAssetReference<BakedAnimationClipSet> CreateClipSet(KeyframeTextureBaker.BakedData data)
 		{
 			using (var builder = new BlobBuilder(Allocator.Temp))
@@ -22,7 +25,7 @@ namespace Unity.GPUAnimation
 		}
 		
 
-		public static void AddCharacterComponents(EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
+		public static void AddCharacterComponents(GameObjectConversionSystem system, EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
 			var renderer = characterRig.GetComponentInChildren<SkinnedMeshRenderer>();
 			
@@ -39,21 +42,20 @@ namespace Unity.GPUAnimation
 			//@TODO: Perform validation that the shader supports GPU Skinning mode
 			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, framerate, lod);
 
+			var materials = new List<Material>();
+			materials.Add(renderer.sharedMaterial);
+
 			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
 			manager.AddComponentData(entity, animState);
 			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
 
-			var renderCharacter = new RenderCharacter
-			{
-				Material = renderer.sharedMaterial,
-				AnimationTexture = bakedData.AnimationTextures,
-				Mesh = bakedData.NewMesh,
-				ReceiveShadows = renderer.receiveShadows,
-				CastShadows = renderer.shadowCastingMode
-				
-			};
-			manager.AddSharedComponentData(entity, renderCharacter);
+			//@TODO: Don't change source material 
+			renderer.sharedMaterial.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
+            renderer.sharedMaterial.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
+            renderer.sharedMaterial.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
+			
+			MeshRendererConversion.Convert(entity, manager, system, renderer, bakedData.NewMesh, materials);
 		}
 	}
     public class ConvertToGPUCharacter : MonoBehaviour
@@ -65,13 +67,7 @@ namespace Unity.GPUAnimation
     [UpdateInGroup(typeof(GameObjectBeforeConversionGroup))]
     class ConvertToGPUCharacterSystem : GameObjectConversionSystem
     {
-	    override protected void OnCreate()
-	    {
-		    base.OnCreate();
-		    //Debug.Log("inti");
-	    }
-	    
-	    override protected void OnUpdate()
+	   override protected void OnUpdate()
 	    {
 		    //@TODO: need to find a proper solution for this
 		    foreach (var system in World.Systems)
@@ -85,9 +81,8 @@ namespace Unity.GPUAnimation
 
 		    Entities.ForEach((ConvertToGPUCharacter character) =>
 		    {
-				CharacterUtility.AddCharacterComponents(DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
+				CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
 		    });
 	    }
     }
-
 }
