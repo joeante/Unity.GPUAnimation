@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -54,8 +55,11 @@ namespace Unity.GPUAnimation
 			renderer.sharedMaterial.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
             renderer.sharedMaterial.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
             renderer.sharedMaterial.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
-			
-			MeshRendererConversion.Convert(entity, manager, system, renderer, bakedData.NewMesh, materials);
+
+            //@TODO: Need to expose a public API
+            var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            method.Invoke(null, new object[]{entity, manager, system, renderer, bakedData.NewMesh, materials});
+			//MeshRendererConversion.Convert(entity, manager, system, renderer, bakedData.NewMesh, materials);
 		}
 	}
     public class ConvertToGPUCharacter : MonoBehaviour
