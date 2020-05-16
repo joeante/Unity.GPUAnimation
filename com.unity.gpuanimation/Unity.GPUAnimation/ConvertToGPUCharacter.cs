@@ -87,6 +87,11 @@ namespace Unity.GPUAnimation
 
 				
 	            method.Invoke(null, new object[]{skinEntity, manager, system, skinRenderer, bakedData.BakedMeshes[i], materials});
+	            
+	            
+	            // @TODO: bounding volume is relative to root bone. needs to be transformed back to animation object.
+				manager.SetComponentData(skinEntity, new RenderBounds() { Value = skinRenderer.localBounds.ToAABB() });
+
             }
 
             //@TODO: Need to expose a public API
@@ -116,24 +121,13 @@ namespace Unity.GPUAnimation
 			    }
 		    }
 		    
+		    
 		    Entities.ForEach((ConvertToGPUCharacter character) =>
 		    {
-			    /*
-			    // Total hack to kill off child entities
-			    foreach (Transform transform in character.GetComponentInChildren<Transform>())
-			    {
-				    if (transform != character.transform)
-				    {
-					    foreach(var e in GetEntities(transform))
-							DstEntityManager.DestroyEntity(e);    
-				    }
-			    }
-			    */
-
-
 			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
 		    });
 
+		    
 	    }
     }
     
