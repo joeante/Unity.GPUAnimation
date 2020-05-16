@@ -25,6 +25,13 @@ namespace Unity.GPUAnimation
                     // How to warn???
                 }
             }).ScheduleParallel();
+            
+            var lookup = GetComponentDataFromEntity<AnimationTextureCoordinate>(true);
+            
+            Entities.WithNativeDisableContainerSafetyRestriction(lookup).ForEach((ref AnimationTextureCoordinate coordinate, in CopyAnimationTextureCoordinate source) =>
+            {
+                coordinate = lookup[source.SourceEntity];
+            }).Schedule();
         }
     }
 }

@@ -19,6 +19,11 @@ namespace Unity.GPUAnimation
 		public BlobAssetReference<BakedAnimationClipSet> AnimationClipSet;
 	}
 	
+	public struct CopyAnimationTextureCoordinate : IComponentData
+	{
+		public Entity SourceEntity;
+	}
+	
 	public struct BakedAnimationClipSet
 	{
 		public BlobArray<BakedAnimationClip> Clips;

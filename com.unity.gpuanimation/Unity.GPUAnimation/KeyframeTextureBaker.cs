@@ -38,9 +38,8 @@ namespace Unity.GPUAnimation
 		public class BakedData
 		{
 			public AnimationTextures AnimationTextures;
-			public Mesh NewMesh;
-			public LodData lods;
-			public float Framerate;
+			public Mesh[]            BakedMeshes;
+			public float             Framerate;
 
 			public List<AnimationClipData> Animations = new List<AnimationClipData>();
 
@@ -54,12 +53,8 @@ namespace Unity.GPUAnimation
 			public int PixelEnd;
 		}
 
-		public static BakedData BakeClips(GameObject animationRoot, AnimationClip[] animationClips, float framerate, LodData lods)
+		public static BakedData BakeClips(GameObject animationRoot, SkinnedMeshRenderer[] renderers, AnimationClip[] animationClips, float framerate)
 		{
-			var skinRenderers = animationRoot.GetComponentsInChildren<SkinnedMeshRenderer>();
-			if (skinRenderers.Length != 1)
-				throw new System.ArgumentException("There must be exactly one SkinnedMeshRenderer");
-
 			// @TODO: warning about more than one materials
 
 			// Before messing about with some arbitrary game object hierarchy.
@@ -73,11 +68,11 @@ namespace Unity.GPUAnimation
 			var skinRenderer = instance.GetComponentInChildren<SkinnedMeshRenderer>();
 
 			BakedData bakedData = new BakedData();
-			bakedData.NewMesh = CreateMesh(skinRenderer);
-			var lod1Mesh = CreateMesh(skinRenderer, lods.Lod1Mesh);
-			var lod2Mesh = CreateMesh(skinRenderer, lods.Lod2Mesh);
-			var lod3Mesh = CreateMesh(skinRenderer, lods.Lod3Mesh);
-			bakedData.lods = new LodData(lod1Mesh, lod2Mesh, lod3Mesh, lods.Lod1Distance, lods.Lod2Distance, lods.Lod3Distance);
+			bakedData.BakedMeshes = new Mesh[renderers.Length];
+
+			bakedData.BakedMeshes[0] = CreateMesh(renderers[0].sharedMesh, null);
+			for (int i = 1;i<renderers.Length;i++)
+				bakedData.BakedMeshes[i] = CreateMesh(renderers[i].sharedMesh, renderers[0].sharedMesh);
 
 			bakedData.Framerate = framerate;
 
@@ -222,42 +217,38 @@ namespace Unity.GPUAnimation
 			return "(" + v.r + ", " + v.g + ", " + v.b + ", " + v.a + ")";
 		}
 
-		private static Mesh CreateMesh(SkinnedMeshRenderer originalRenderer, Mesh mesh = null)
+		private static Mesh CreateMesh(Mesh sourceMesh, Mesh highLODSourceMesh)
 		{
 			Mesh newMesh = new Mesh();
-			Mesh originalMesh = mesh == null ? originalRenderer.sharedMesh : mesh;
-			var boneWeights = originalMesh.boneWeights;
+			var boneWeights = sourceMesh.boneWeights;
 
-			originalMesh.CopyMeshData(newMesh);
+			sourceMesh.CopyMeshData(newMesh);
 
-			Vector3[] vertices = originalMesh.vertices;
-			Vector2[] boneIds = new Vector2[originalMesh.vertexCount];
-			Vector2[] boneInfluences = new Vector2[originalMesh.vertexCount];
+			Vector3[] vertices = sourceMesh.vertices;
+			Vector2[] boneIds = new Vector2[sourceMesh.vertexCount];
+			Vector2[] boneInfluences = new Vector2[sourceMesh.vertexCount];
 
 			int[] boneRemapping = null;
 
-			if (mesh != null)
+			var totalBonesCount = sourceMesh.bindposes.Length;
+			if (highLODSourceMesh != null)
 			{
-				var originalBindPoseMatrices = originalRenderer.sharedMesh.bindposes;
-				var newBindPoseMatrices = mesh.bindposes;
+				totalBonesCount = highLODSourceMesh.bindposes.Length;
 				
-				if (newBindPoseMatrices.Length != originalBindPoseMatrices.Length)
+				var originalBindPoseMatrices = highLODSourceMesh.bindposes;
+				var newBindPoseMatrices = sourceMesh.bindposes;
+				
+				boneRemapping = new int[newBindPoseMatrices.Length];
+				for (int i = 0; i < boneRemapping.Length; i++)
 				{
-					//Debug.LogError(mesh.name + " - Invalid bind poses, got " + newBindPoseMatrices.Length + ", but expected "
-					//				+ originalBindPoseMatrices.Length);
-				}
-				else
-				{
-					boneRemapping = new int[originalBindPoseMatrices.Length];
-					for (int i = 0; i < boneRemapping.Length; i++)
-					{
-						boneRemapping[i] = Array.FindIndex(originalBindPoseMatrices, x => x == newBindPoseMatrices[i]);
-					}
+					boneRemapping[i] = Array.FindIndex(originalBindPoseMatrices, x => x == newBindPoseMatrices[i]);
+					//@TODO: Why compare bind post matrix. Just compare the actual transform reference of the game object
+					if (boneRemapping[i] == -1)
+						Debug.LogError("Failed to find bone in high lod mesh");
 				}
 			}
 			
-			var bones = originalRenderer.bones;
-			for (int i = 0; i < originalMesh.vertexCount; i++)
+			for (int i = 0; i < sourceMesh.vertexCount; i++)
 			{
 				int boneIndex0 = boneWeights[i].boneIndex0;
 				int boneIndex1 = boneWeights[i].boneIndex1;
@@ -268,7 +259,7 @@ namespace Unity.GPUAnimation
 					boneIndex1 = boneRemapping[boneIndex1];
 				}
 
-				boneIds[i] = new Vector2((boneIndex0 + 0.5f) / bones.Length, (boneIndex1 + 0.5f) / bones.Length);
+				boneIds[i] = new Vector2((boneIndex0 + 0.5f) / totalBonesCount, (boneIndex1 + 0.5f) / totalBonesCount);
 
 				float mostInfluentialBonesWeight = boneWeights[i].weight0 + boneWeights[i].weight1;
 

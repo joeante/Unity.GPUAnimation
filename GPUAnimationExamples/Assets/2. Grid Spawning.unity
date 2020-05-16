@@ -223,7 +223,7 @@ LightingSettings:
   m_PrefabAsset: {fileID: 0}
   m_Name: Settings.lighting
   serializedVersion: 2
-  m_GIWorkflowMode: 0
+  m_GIWorkflowMode: 1
   m_EnableBakedLightmaps: 1
   m_EnableRealtimeLightmaps: 1
   m_RealtimeEnvironmentLighting: 1
@@ -319,7 +319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc67f13d50ac34831a5bf38845c77593, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 690739406791910541, guid: 45d1c3d74ec3848139cff5ce7f29e9eb, type: 3}
+  Prefab: {fileID: 6013813571681448269, guid: f46d9b89012b64b2f8fda098217a1f6a, type: 3}
   CountX: 100
   CountY: 100
 --- !u!4 &774379244

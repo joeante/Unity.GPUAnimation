@@ -4,14 +4,13 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Unity.GPUAnimation
 {
 	public static class CharacterUtility
 	{
-		
-		
 		public static BlobAssetReference<BakedAnimationClipSet> CreateClipSet(KeyframeTextureBaker.BakedData data)
 		{
 			using (var builder = new BlobBuilder(Allocator.Temp))
@@ -24,41 +23,75 @@ namespace Unity.GPUAnimation
 				return builder.CreateBlobAssetReference<BakedAnimationClipSet>(Allocator.Persistent);
 			}
 		}
-		
 
 		public static void AddCharacterComponents(GameObjectConversionSystem system, EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
-			var renderer = characterRig.GetComponentInChildren<SkinnedMeshRenderer>();
-			
-			var lod = new LodData
+			var lodGroup = characterRig.GetComponentInChildren<LODGroup>();
+
+			var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
+			if (lodGroup != null)
 			{
-				Lod1Mesh = renderer.sharedMesh,
-				Lod2Mesh = renderer.sharedMesh,
-				Lod3Mesh = renderer.sharedMesh,
-				Lod1Distance = 0,
-				Lod2Distance = 100,
-				Lod3Distance = 10000,
-			};
+				foreach (var lod in lodGroup.GetLODs())
+				{
+					//@TODO: Validation (More meshes etc)
+					skinnedMeshRenderers.Add(lod.renderers[0] as SkinnedMeshRenderer);
+				}
+			}
+			else
+			{
+				//@TODO: Validate exactly one?
+				characterRig.GetComponentsInChildren(skinnedMeshRenderers);
+			}
 
 			//@TODO: Perform validation that the shader supports GPU Skinning mode
-			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, clips, framerate, lod);
-
-			var materials = new List<Material>();
-			materials.Add(renderer.sharedMaterial);
+			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, skinnedMeshRenderers.ToArray(), clips, framerate);
 
 			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
 			manager.AddComponentData(entity, animState);
 			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
+			
+			var materials = new List<Material>();
 
-			//@TODO: Don't change source material 
-			renderer.sharedMaterial.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
-            renderer.sharedMaterial.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
-            renderer.sharedMaterial.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
+			bool makeChildEntity = true;
+		    var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            for (int i = 0;i != skinnedMeshRenderers.Count;i++)
+            {
+	            var skinRenderer = skinnedMeshRenderers[i];
+	            
+	            //@TODO Share between lods if same
+	            var material = Object.Instantiate(skinRenderer.sharedMaterial);
+				//@TODO: Don't change source material 
+	            material.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
+	            material.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
+	            material.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
+
+	            materials.Clear();
+				materials.Add(material);
+
+				Entity skinEntity;
+				if (makeChildEntity)
+				{
+					skinEntity = system.CreateAdditionalEntity(skinRenderer);
+					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
+					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
+
+					manager.AddComponentData(skinEntity, new Parent { Value = entity });
+	                manager.AddComponentData(skinEntity, new LocalToParent { Value = float4x4.identity });
+	                manager.AddComponentData(skinEntity, new LocalToWorld { Value = characterRig.transform.localToWorldMatrix });
+				}
+				else
+				{
+					skinEntity = entity;
+				}
+
+				
+	            method.Invoke(null, new object[]{skinEntity, manager, system, skinRenderer, bakedData.BakedMeshes[i], materials});
+            }
 
             //@TODO: Need to expose a public API
-            var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            method.Invoke(null, new object[]{entity, manager, system, renderer, bakedData.NewMesh, materials});
+            //var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            //method.Invoke(null, new object[]{entity, manager, system, renderer, bakedData.NewMesh, materials});
 			//MeshRendererConversion.Convert(entity, manager, system, renderer, bakedData.NewMesh, materials);
 		}
 	}
@@ -82,11 +115,34 @@ namespace Unity.GPUAnimation
 				    system.Enabled = false;
 			    }
 		    }
-
+		    
 		    Entities.ForEach((ConvertToGPUCharacter character) =>
 		    {
-				CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
+			    /*
+			    // Total hack to kill off child entities
+			    foreach (Transform transform in character.GetComponentInChildren<Transform>())
+			    {
+				    if (transform != character.transform)
+				    {
+					    foreach(var e in GetEntities(transform))
+							DstEntityManager.DestroyEntity(e);    
+				    }
+			    }
+			    */
+
+
+			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
 		    });
+
+	    }
+    }
+    
+        [UpdateInGroup(typeof(GameObjectAfterConversionGroup))]
+    class ConvertToGPUCharacterSystemLate : GameObjectConversionSystem
+    {
+	   override protected void OnUpdate()
+	    {
+		    
 	    }
     }
 }
