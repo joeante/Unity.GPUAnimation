@@ -14,13 +14,14 @@ struct SimpleAnim : IComponentData
 }
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public class SimpleAnimSystem : JobComponentSystem
+public class SimpleAnimSystem : SystemBase
 {
-    [BurstCompile]
-    struct SimpleAnimJob : IJobForEachWithEntity<SimpleAnim, GPUAnimationState>
+
+    protected override void OnUpdate()
     {
-        public float DeltaTime;
-        public void Execute(Entity entity, int index, ref SimpleAnim simple, ref GPUAnimationState animstate)
+        float DeltaTime = Time.DeltaTime; 
+        
+        Entities.ForEach((Entity entity, ref GPUAnimationState animstate, ref SimpleAnim simple) =>
         {
             animstate.AnimationClipIndex = simple.ClipIndex;
 
@@ -35,7 +36,7 @@ public class SimpleAnimSystem : JobComponentSystem
                 {
                     var length = 10.0F;
 
-                    var random = new Unity.Mathematics.Random((uint)index + 1);
+                    var random = new Unity.Mathematics.Random((uint)entity.Index + 1);
                     
                     // For more variety randomize state more...
                     random.NextInt();
@@ -51,11 +52,6 @@ public class SimpleAnimSystem : JobComponentSystem
             {
                 // @TODO: Warnings?
             }
-        }
-    }
-
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
-    {
-        return new SimpleAnimJob { DeltaTime = Time.DeltaTime}.Schedule(this, inputDeps);
+        }).ScheduleParallel();
     }
 }

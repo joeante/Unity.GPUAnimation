@@ -1,12 +1,15 @@
 {
   "dependencies": {
     "com.unity.gpuanimation": "file:../../com.unity.gpuanimation",
+    "com.unity.entities": "file:/Users/joe/Sources/dots-2/Samples/Packages/com.unity.entities",
+    "com.unity.jobs": "file:/Users/joe/Sources/dots-2/Samples/Packages/com.unity.jobs",
+    "com.unity.collections": "file:/Users/joe/Sources/dots-2/Samples/Packages/com.unity.collections",
+    "com.unity.rendering.hybrid": "file:/Users/joe/Sources/dots-2/Samples/Packages/com.unity.rendering.hybrid",
     "com.unity.ide.rider": "1.2.1",
     "com.unity.ide.visualstudio": "2.0.1",
     "com.unity.ide.vscode": "1.2.0",
     "com.unity.render-pipelines.lightweight": "8.0.1",
     "com.unity.render-pipelines.universal": "9.0.0-preview.14",
-    "com.unity.rendering.hybrid": "0.5.0-preview.6",
     "com.unity.shadergraph": "9.0.0-preview.14",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
