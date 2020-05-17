@@ -8,7 +8,7 @@ struct SimpleAnim : IComponentData
 {
     public int  ClipIndex;
     public float Speed;
-    public bool IsFirstFrame;
+    public bool DidInitialize;
     public bool RandomizeStartTime;
     public float2 RandomizeMinMaxSpeed;
 }
@@ -28,7 +28,7 @@ public class SimpleAnimSystem : SystemBase
             ref var clips = ref animstate.AnimationClipSet.Value.Clips;
             if ((uint) animstate.AnimationClipIndex < (uint) clips.Length)
             {
-                if (!simple.IsFirstFrame)
+                if (simple.DidInitialize)
                 {
                     animstate.Time += DeltaTime * simple.Speed;
                 }
@@ -40,12 +40,13 @@ public class SimpleAnimSystem : SystemBase
                     
                     // For more variety randomize state more...
                     random.NextInt();
+                    random.NextInt();
                     
                     if (simple.RandomizeStartTime)
                         animstate.Time = random.NextFloat(0, length);
                     simple.Speed = random.NextFloat(simple.RandomizeMinMaxSpeed.x, simple.RandomizeMinMaxSpeed.y);
                     
-                    simple.IsFirstFrame = false;
+                    simple.DidInitialize = true;
                 }
             }
             else

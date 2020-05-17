@@ -16,6 +16,7 @@ public class SpawnerSystem_FromEntity : SystemBase
                     spawnerFromEntity.CountX * spawnerFromEntity.CountY, Allocator.TempJob);
                 int countX = spawnerFromEntity.CountX;
                 int countY = spawnerFromEntity.CountY;
+                float height = spawnerFromEntity.Height;
                 LocalToWorld locationCopy = location;
                 var translations = GetComponentDataFromEntity<Translation>();
                 Job.WithCode(() =>
@@ -25,7 +26,7 @@ public class SpawnerSystem_FromEntity : SystemBase
                         for (var y = 0; y < countY; y++)
                         {
                             var position = math.transform(locationCopy.Value,
-                                new float3(x * 0.7F, noise.cnoise(new float2(x, y) * 0.21F) * 2, y * 0.7F));
+                                new float3(x * 0.7F, noise.cnoise(new float2(x, y) * 0.21F) * height, y * 0.7F));
                             translations[instances[y * countX + x]] = new Translation{Value = position};
                         }
                     }

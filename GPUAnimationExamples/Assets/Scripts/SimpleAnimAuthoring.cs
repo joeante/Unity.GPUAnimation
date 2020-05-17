@@ -13,7 +13,7 @@ class SimpleAnimAuthoring :MonoBehaviour, IConvertGameObjectToEntity
             RandomizeStartTime = RandomizeStartTime, 
             ClipIndex = ClipIndex, 
             Speed = 1.0F, 
-            IsFirstFrame = true,
+            DidInitialize = false,
             RandomizeMinMaxSpeed = RandomzeMinMaxSpeed
         });
     }
