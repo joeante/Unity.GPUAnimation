@@ -1,9 +1,6 @@
 #ifndef GPUANIMATION_HLSL_INCLUDED
 #define GPUANIMATION_HLSL_INCLUDED
 
-StructuredBuffer<float4x4> objectToWorldBuffer;
-StructuredBuffer<float4>   textureCoordinatesBuffer;
-
 SamplerState a_point_clamp_sampler;
 
 //@TODO: Use vertex skinning node
@@ -26,33 +23,46 @@ inline float4x4 CreateMatrix(float texturePosition, float boneId,
 	return reconstructedMatrix;
 }
 
+// * animationTextureCoords.x => frame0 pixel
+// * animationTextureCoords.y => frame1 pixel
+// * animationTextureCoords.z => current frame, next frame blend
 inline float4x4 CalculateSkinMatrix(float3 animationTextureCoords, float2 boneIds, float2 boneInfluences,
     TEXTURE2D(AnimationTexture0),
     TEXTURE2D(AnimationTexture1),
     TEXTURE2D(AnimationTexture2))
 {
-	// We interpolate between two matrices
-	float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.x,
+	// bone0 matrix
+	float4x4 boneMatrix_0;
+    {
+        float4x4 frame0_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.x,
         AnimationTexture0,
         AnimationTexture1,
         AnimationTexture2);
-	float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, boneIds.x,
+            
+        float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.y, boneIds.x,
         AnimationTexture0,
         AnimationTexture1,
         AnimationTexture2);
-	float4x4 frame0_BoneMatrix = frame0_BoneMatrix0 * (1 - animationTextureCoords.z) + frame0_BoneMatrix1 * animationTextureCoords.z;
+        
+        boneMatrix_0 = lerp(frame0_BoneMatrix0, frame1_BoneMatrix0, animationTextureCoords.z);
+    }
 
-	float4x4 frame1_BoneMatrix0 = CreateMatrix(animationTextureCoords.x, boneIds.y,
-        AnimationTexture0,
-        AnimationTexture1,
-        AnimationTexture2);
-	float4x4 frame1_BoneMatrix1= CreateMatrix(animationTextureCoords.y, boneIds.y,
-        AnimationTexture0,
-        AnimationTexture1,
-        AnimationTexture2);
-	float4x4 frame1_BoneMatrix = frame1_BoneMatrix0 * (1 - animationTextureCoords.z) + frame1_BoneMatrix1 * animationTextureCoords.z;
+    // bone1 matrix 
+    float4x4 boneMatrix_1;
+    {
+        float4x4 frame0_BoneMatrix1 = CreateMatrix(animationTextureCoords.x, boneIds.y,
+            AnimationTexture0,
+            AnimationTexture1,
+            AnimationTexture2);
+        float4x4 frame1_BoneMatrix1 = CreateMatrix(animationTextureCoords.y, boneIds.y,
+            AnimationTexture0,
+            AnimationTexture1,
+            AnimationTexture2);
+            
+        boneMatrix_1 = lerp(frame0_BoneMatrix1, frame1_BoneMatrix1, animationTextureCoords.z);
+    }
 
-	return frame0_BoneMatrix * boneInfluences.x + frame1_BoneMatrix * boneInfluences.y;
+	return boneMatrix_0 * boneInfluences.x + boneMatrix_1 * boneInfluences.y;
 }
 
 inline void ApplySkinning_float(

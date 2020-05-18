@@ -9,7 +9,8 @@
         "Unity.Burst",
         "Unity.Rendering.Hybrid",
         "Unity.Mathematics.Extensions",
-        "Unity.Mathematics.Extensions.Hybrid"
+        "Unity.Mathematics.Extensions.Hybrid",
+        "Unity.Transforms.Hybrid"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

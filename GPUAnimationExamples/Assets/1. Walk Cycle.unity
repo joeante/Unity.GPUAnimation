@@ -236,11 +236,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.96
+      value: -0.99
       objectReference: {fileID: 0}
     - target: {fileID: 400034, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.09
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11100000, guid: 325d845a8317c2240905bd464b84d6f8, type: 3}
       propertyPath: m_Animations.Array.size
@@ -313,6 +313,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RandomizeStartTime: 0
   ClipIndex: 0
+  MoveSpeed: 0
   RandomzeMinMaxSpeed:
     x: 1
     y: 1
@@ -895,7 +896,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 09558688d11514b7998b16af9f5ac8a6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -946,6 +947,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 575190678, guid: f46d9b89012b64b2f8fda098217a1f6a, type: 3}
+      propertyPath: MoveSpeed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 575190678, guid: f46d9b89012b64b2f8fda098217a1f6a, type: 3}
+      propertyPath: RandomizeStartTime
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6013813571681086765, guid: f46d9b89012b64b2f8fda098217a1f6a,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1005,6 +1014,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Skeleton_LOD-GPU
+      objectReference: {fileID: 0}
+    - target: {fileID: 6013813571681448269, guid: f46d9b89012b64b2f8fda098217a1f6a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1063046170150508965, guid: f46d9b89012b64b2f8fda098217a1f6a, type: 3}

@@ -1,14 +1,29 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Unity.GPUAnimation
 {
+	//@TODO: This is a workaround to ensure the generated textures are stored in the subscene
+	//       Currently we don't analyze unityengine.objects for their references for inclusion
+	class ForceIncludeAnimationTextures : IComponentData, ICloneable
+	{
+		public AnimationTextures Textures;
+		public object Clone()
+		{
+			return this;
+		}
+		
+	}
+
 	public static class CharacterUtility
 	{
 		public static BlobAssetReference<BakedAnimationClipSet> CreateClipSet(KeyframeTextureBaker.BakedData data)
@@ -26,6 +41,9 @@ namespace Unity.GPUAnimation
 
 		public static void AddCharacterComponents(GameObjectConversionSystem system, EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
+			var transformConversion = system.World.GetExistingSystem<TransformConversion>();
+			transformConversion.DeclareTransformUsage(entity, TransformFlags.ReadLocalToWorld);
+
 			var lodGroup = characterRig.GetComponentInChildren<LODGroup>();
 
 			var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
@@ -51,6 +69,11 @@ namespace Unity.GPUAnimation
 			manager.AddComponentData(entity, animState);
 			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
 			
+			manager.AddComponentData(entity, new ForceIncludeAnimationTextures
+			{
+				Textures = bakedData.AnimationTextures
+			});
+			
 			var materials = new List<Material>();
 
 			bool makeChildEntity = true;
@@ -59,9 +82,8 @@ namespace Unity.GPUAnimation
             {
 	            var skinRenderer = skinnedMeshRenderers[i];
 	            
-	            //@TODO Share between lods if same
+	            //@TODO Share material between lods if same
 	            var material = Object.Instantiate(skinRenderer.sharedMaterial);
-				//@TODO: Don't change source material 
 	            material.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
 	            material.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
 	            material.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
@@ -76,6 +98,8 @@ namespace Unity.GPUAnimation
 					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
 					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
 
+					system.World.GetExistingSystem<TransformConversion>().DeclareTransformUsage(skinEntity, TransformFlags.ManuallyAddedTransforms);
+					
 					manager.AddComponentData(skinEntity, new Parent { Value = entity });
 	                manager.AddComponentData(skinEntity, new LocalToParent { Value = float4x4.identity });
 	                manager.AddComponentData(skinEntity, new LocalToWorld { Value = characterRig.transform.localToWorldMatrix });
@@ -89,8 +113,9 @@ namespace Unity.GPUAnimation
 	            method.Invoke(null, new object[]{skinEntity, manager, system, skinRenderer, bakedData.BakedMeshes[i], materials});
 	            
 	            
-	            // @TODO: bounding volume is relative to root bone. needs to be transformed back to animation object.
-				manager.SetComponentData(skinEntity, new RenderBounds() { Value = skinRenderer.localBounds.ToAABB() });
+	            var transform = characterRig.transform.worldToLocalMatrix * skinRenderer.rootBone.transform.localToWorldMatrix;
+	            var aabb = AABB.Transform(transform, skinRenderer.localBounds.ToAABB());
+				manager.SetComponentData(skinEntity, new RenderBounds() { Value = aabb });
 
             }
 
@@ -127,15 +152,6 @@ namespace Unity.GPUAnimation
 			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
 		    });
 
-		    
-	    }
-    }
-    
-        [UpdateInGroup(typeof(GameObjectAfterConversionGroup))]
-    class ConvertToGPUCharacterSystemLate : GameObjectConversionSystem
-    {
-	   override protected void OnUpdate()
-	    {
 		    
 	    }
     }

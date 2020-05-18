@@ -8,3 +8,4 @@ GPUAnimationExamples/obj
 *.csproj
 *.DS_Store
 GPUAnimationExamples/UserSettings/EditorUserSettings.asset
+GPUAnimationExamples/Assets/SceneDependencyCache*

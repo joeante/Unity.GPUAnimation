@@ -1,13 +1,14 @@
-using Unity.Burst;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.GPUAnimation;
 using Unity.Mathematics;
+using Unity.Transforms;
 
+[TransformUsage(TransformFlags.WriteWorldTranslation | TransformFlags.WriteWorldRotation)]
 struct SimpleAnim : IComponentData
 {
     public int  ClipIndex;
     public float Speed;
+    public float MovementSpeed;
     public bool DidInitialize;
     public bool RandomizeStartTime;
     public float2 RandomizeMinMaxSpeed;
@@ -21,8 +22,10 @@ public class SimpleAnimSystem : SystemBase
     {
         float DeltaTime = Time.DeltaTime; 
         
-        Entities.ForEach((Entity entity, ref GPUAnimationState animstate, ref SimpleAnim simple) =>
+        Entities.ForEach((Entity entity, ref GPUAnimationState animstate, ref SimpleAnim simple, ref Rotation rotation, ref Translation translation) =>
         {
+            translation.Value += math.mul(rotation.Value, new float3(0, 0, simple.MovementSpeed) * DeltaTime);
+            
             animstate.AnimationClipIndex = simple.ClipIndex;
 
             ref var clips = ref animstate.AnimationClipSet.Value.Clips;
