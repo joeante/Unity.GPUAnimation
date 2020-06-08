@@ -3,9 +3,11 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Rendering;
+using UnityEngine;
 
 namespace Unity.GPUAnimation
 {
+    [ExecuteAlways]
     [UpdateInGroup(typeof(UpdatePresentationSystemGroup))]
     public class UpdateAnimationTextureCoordinateSystem : SystemBase
     {

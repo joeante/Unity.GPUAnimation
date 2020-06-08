@@ -21,7 +21,6 @@ namespace Unity.GPUAnimation
 		{
 			return this;
 		}
-		
 	}
 
 	public static class CharacterUtility
@@ -60,6 +59,7 @@ namespace Unity.GPUAnimation
 				//@TODO: Validate exactly one?
 				characterRig.GetComponentsInChildren(skinnedMeshRenderers);
 			}
+			
 
 			//@TODO: Perform validation that the shader supports GPU Skinning mode
 			var bakedData = KeyframeTextureBaker.BakeClips(characterRig, skinnedMeshRenderers.ToArray(), clips, framerate);
@@ -73,56 +73,46 @@ namespace Unity.GPUAnimation
 			{
 				Textures = bakedData.AnimationTextures
 			});
-			
-			var materials = new List<Material>();
 
-			bool makeChildEntity = true;
-		    var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+			var materials = new Dictionary<Material, Material>();
+			
             for (int i = 0;i != skinnedMeshRenderers.Count;i++)
             {
 	            var skinRenderer = skinnedMeshRenderers[i];
-	            
-	            //@TODO Share material between lods if same
-	            var material = Object.Instantiate(skinRenderer.sharedMaterial);
-	            material.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
-	            material.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
-	            material.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
+				system.DeclareDependency(characterRig.gameObject, skinRenderer.gameObject);
+				system.DeclareDependency(skinRenderer.gameObject, characterRig.gameObject);
+				system.DeclareAssetDependency(characterRig.gameObject, skinRenderer.sharedMaterial);
 
-	            materials.Clear();
-				materials.Add(material);
-
-				Entity skinEntity;
-				if (makeChildEntity)
+				var srcMaterials = skinRenderer.sharedMaterials;
+				foreach (var srcMaterial in srcMaterials)
 				{
-					skinEntity = system.CreateAdditionalEntity(skinRenderer);
+					if (!materials.TryGetValue(srcMaterial, out var material))
+					{
+			            material = Object.Instantiate(skinRenderer.sharedMaterial);
+			            material.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
+			            material.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
+			            material.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
+			            materials.Add(srcMaterial, material);
+					}
+					
+					var skinEntity = system.CreateAdditionalEntity(skinRenderer);
 					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
 					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
-
-					system.World.GetExistingSystem<TransformConversion>().DeclareTransformUsage(skinEntity, TransformFlags.ManuallyAddedTransforms);
 					
+					// The Skin mesh renderer got baked into a space relative to rig root game object.
+					system.World.GetExistingSystem<TransformConversion>().DeclareTransformUsage(skinEntity, TransformFlags.ManuallyAddedTransforms);
 					manager.AddComponentData(skinEntity, new Parent { Value = entity });
 	                manager.AddComponentData(skinEntity, new LocalToParent { Value = float4x4.identity });
 	                manager.AddComponentData(skinEntity, new LocalToWorld { Value = characterRig.transform.localToWorldMatrix });
-				}
-				else
-				{
-					skinEntity = entity;
-				}
-
-				
-	            method.Invoke(null, new object[]{skinEntity, manager, system, skinRenderer, bakedData.BakedMeshes[i], materials});
+					
+					MeshRendererConversion.AddRendererComponents(manager, skinEntity, skinRenderer, 0, bakedData.BakedMeshes[i], material);
+					system.ConfigureEditorRenderData(skinEntity, skinRenderer.gameObject, false);
 	            
-	            
-	            var transform = characterRig.transform.worldToLocalMatrix * skinRenderer.rootBone.transform.localToWorldMatrix;
-	            var aabb = AABB.Transform(transform, skinRenderer.localBounds.ToAABB());
-				manager.SetComponentData(skinEntity, new RenderBounds() { Value = aabb });
-
+					var transform = characterRig.transform.worldToLocalMatrix * skinRenderer.rootBone.transform.localToWorldMatrix;
+					var aabb = AABB.Transform(transform, skinRenderer.localBounds.ToAABB());
+					manager.SetComponentData(skinEntity, new RenderBounds() { Value = aabb });
+				}
             }
-
-            //@TODO: Need to expose a public API
-            //var method = typeof(RenderMesh).Assembly.GetType("Unity.Rendering.MeshRendererConversion", true).GetMethod("Convert", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            //method.Invoke(null, new object[]{entity, manager, system, renderer, bakedData.NewMesh, materials});
-			//MeshRendererConversion.Convert(entity, manager, system, renderer, bakedData.NewMesh, materials);
 		}
 	}
     public class ConvertToGPUCharacter : MonoBehaviour
@@ -135,24 +125,22 @@ namespace Unity.GPUAnimation
     class ConvertToGPUCharacterSystem : GameObjectConversionSystem
     {
 	   override protected void OnUpdate()
-	    {
-		    //@TODO: need to find a proper solution for this
-		    foreach (var system in World.Systems)
-		    {
-			    if (system.GetType().Name == "SkinnedMeshRendererConversion")
-			    {
-				    Debug.Log("Did Disable");
-				    system.Enabled = false;
-			    }
-		    }
-		    
-		    
-		    Entities.ForEach((ConvertToGPUCharacter character) =>
-		    {
-			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
-		    });
+	   {
+			// The skin mesh renderer is handled by ConvertToGPUCharacter, don't process any of them.
+			Entities.ForEach((Entity entity, SkinnedMeshRenderer renderer) =>
+			{
+				var ancestor = renderer.GetComponentInParent<ConvertToGPUCharacter>();
+				if (ancestor)
+				{
+					DeclareDependency(ancestor, renderer);
+					EntityManager.RemoveComponent<SkinnedMeshRenderer>(entity);
+				}
+			});
 
-		    
+			Entities.ForEach((Entity entity, ConvertToGPUCharacter character) =>
+			{
+			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
+			});
 	    }
     }
 }
