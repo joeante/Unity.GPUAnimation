@@ -88,7 +88,7 @@ namespace Unity.GPUAnimation
 				{
 					if (!materials.TryGetValue(srcMaterial, out var material))
 					{
-			            material = Object.Instantiate(skinRenderer.sharedMaterial);
+			            material = Object.Instantiate(srcMaterial);
 			            material.SetTexture("_AnimationTexture0", bakedData.AnimationTextures.Animation0);
 			            material.SetTexture("_AnimationTexture1", bakedData.AnimationTextures.Animation1);
 			            material.SetTexture("_AnimationTexture2", bakedData.AnimationTextures.Animation2);
