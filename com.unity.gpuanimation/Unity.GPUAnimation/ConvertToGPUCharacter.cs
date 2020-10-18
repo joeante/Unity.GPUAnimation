@@ -40,9 +40,6 @@ namespace Unity.GPUAnimation
 
 		public static void AddCharacterComponents(GameObjectConversionSystem system, EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
 		{
-			var transformConversion = system.World.GetExistingSystem<TransformConversion>();
-			transformConversion.DeclareTransformUsage(entity, TransformFlags.ReadLocalToWorld);
-
 			var lodGroup = characterRig.GetComponentInChildren<LODGroup>();
 
 			var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
@@ -95,7 +92,8 @@ namespace Unity.GPUAnimation
 			            materials.Add(srcMaterial, material);
 					}
 					
-					var skinEntity = system.CreateAdditionalEntity(skinRenderer);
+					// @TODO: How do setup a manually created transform...
+					var skinEntity = system.CreateAdditionalEntity(skinRenderer, ???);
 					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
 					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
 					
@@ -139,7 +137,7 @@ namespace Unity.GPUAnimation
 
 			Entities.ForEach((Entity entity, ConvertToGPUCharacter character) =>
 			{
-			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character), character.gameObject, character.Clips, character.Framerate);
+			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character, TransformUsageFlags.ReadLocalToWorld), character.gameObject, character.Clips, character.Framerate);
 			});
 	    }
     }
