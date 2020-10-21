@@ -3,7 +3,6 @@ using Unity.Transforms;
 
 // ReSharper disable once InconsistentNaming
 [GenerateAuthoringComponent]
-[TransformUsage(TransformFlags.ReadLocalToWorld)]
 public struct Spawner_FromEntity : IComponentData
 {
     public int CountX;
