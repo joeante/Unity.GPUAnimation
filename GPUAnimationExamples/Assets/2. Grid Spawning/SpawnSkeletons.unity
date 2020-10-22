@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09ada5b17d7741eca6f03b7542811b6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CountX: 10
-  CountY: 30
+  CountX: 100
+  CountY: 100
   Height: 0
   Prefab: {fileID: 6013813571681448269, guid: f46d9b89012b64b2f8fda098217a1f6a, type: 3}
 --- !u!4 &774379244
@@ -213,6 +213,7 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1

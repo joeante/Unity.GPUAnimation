@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-
+/*
 [CustomEditor(typeof(SkinnedMeshRenderer))]
 public class SkinnedMeshRendererEditor : Editor
 {
@@ -23,3 +23,4 @@ public class SkinnedMeshRendererEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 }
+*/

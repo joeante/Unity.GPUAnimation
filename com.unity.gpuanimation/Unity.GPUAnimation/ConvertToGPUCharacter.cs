@@ -151,9 +151,6 @@ namespace Unity.GPUAnimation
 			            materials.Add(srcMaterial, material);
 					}
 					
-					// @TODO: Remove this again once bug in conversion code is fixed. (Sebastian says he'll fix it)
-					var skinEntity2 = system.GetPrimaryEntity(skinRenderer.gameObject, TransformUsageFlags.None);
-					
 					var skinEntity = system.CreateAdditionalEntity(skinRenderer.gameObject, TransformUsageFlags.ManualOverride);
 					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
 					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
@@ -198,7 +195,7 @@ namespace Unity.GPUAnimation
 			// The skin mesh renderer is handled by ConvertToGPUCharacter, don't process any of them.
 			Entities.ForEach((Entity entity, SkinnedMeshRenderer renderer) =>
 			{
-				var ancestor = renderer.GetComponentInParent<ConvertToGPUCharacter>();
+				var ancestor = renderer.gameObject.GetComponentInParent<ConvertToGPUCharacter>(true);
 				if (ancestor)
 				{
 					DeclareDependency(ancestor, renderer);
