@@ -2,7 +2,6 @@ using Unity.Entities;
 using Unity.GPUAnimation;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Transforms.LowLevel;
 
 struct SimpleAnim : IComponentData
 {
@@ -15,14 +14,14 @@ struct SimpleAnim : IComponentData
 }
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public class SimpleAnimSystem : SystemBase
+public partial class SimpleAnimSystem : SystemBase
 {
 
     protected override void OnUpdate()
     {
         float DeltaTime = Time.DeltaTime; 
         
-        Entities.ForEach((Entity entity, ref GPUAnimationState animstate, ref SimpleAnim simple, ref GlobalRotation rotation, ref GlobalTranslation translation) =>
+        Entities.ForEach((Entity entity, ref GPUAnimationState animstate, ref SimpleAnim simple, ref Rotation rotation, ref Translation translation) =>
         {
             translation.Value += math.mul(rotation.Value, new float3(0, 0, simple.MovementSpeed) * DeltaTime);
             

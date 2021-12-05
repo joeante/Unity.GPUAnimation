@@ -1,16 +1,15 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Transforms.LowLevel;
 
-public class SpawnerSystem_FromEntity : SystemBase
+public partial class SpawnerSystem_FromEntity : SystemBase
 {
     EntityCommandBufferSystem _CommandsSystem;
     protected override void OnUpdate()
     {
         var buf = _CommandsSystem.CreateCommandBuffer();
         Entities.ForEach(
-            (Entity entity, in Spawner_FromEntity spawnerFromEntity, in GlobalTranslation location) =>
+            (Entity entity, in Spawner_FromEntity spawnerFromEntity, in Translation location) =>
             {
                 buf.DestroyEntity(entity);
 
@@ -26,7 +25,10 @@ public class SpawnerSystem_FromEntity : SystemBase
                         var rot = quaternion.RotateY(rand.NextFloat(0.0F, math.PI * 2));
                         var position = location.Value + new float3(x * 0.7F, noise.cnoise(new float2(x, y) * 0.21F) * height, y * 0.7F);
 
-                        buf.Instantiate(spawnerFromEntity.Prefab, position, rot);
+                        //buf.Instantiate(spawnerFromEntity.Prefab, position, rot);
+                        var instance = buf.Instantiate(spawnerFromEntity.Prefab);
+                        buf.SetComponent(instance, new Translation { Value = position });
+                        buf.SetComponent(instance, new Rotation { Value = rot });
                     }
                 }
             }).Run();

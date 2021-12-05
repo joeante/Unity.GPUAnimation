@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
@@ -65,24 +63,10 @@ namespace Unity.GPUAnimation
 
 		}
 
-		static void Depend(GameObjectConversionSystem system, Renderer renderer, GameObject characterRig)
+		public static void AddCharacterComponents(IBaker baker, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate, DynamicBuffer<LinkedEntityGroup> hack)
 		{
-			system.DeclareDependency(characterRig.gameObject, renderer);
-			if (renderer != null)
-				system.DeclareDependency(renderer.gameObject, characterRig.gameObject);
-
-			var skin = renderer as SkinnedMeshRenderer;
-			if (skin)
-				system.DeclareAssetDependency(characterRig, skin.sharedMesh);
-
-			var srcMaterials = renderer.sharedMaterials;
-			foreach(var m in srcMaterials)
-				system.DeclareAssetDependency(characterRig.gameObject, m);
-		}
-
-		public static void AddCharacterComponents(GameObjectConversionSystem system, EntityManager manager, Entity entity, GameObject characterRig, AnimationClip[] clips, float framerate)
-		{
-			var lodGroup = characterRig.GetComponentInChildren<LODGroup>();
+			//@TODO: Missing Baker.GetComponentInChildren (This is an incorrect dependency setup)
+			var lodGroup = baker.Reference(characterRig.GetComponentInChildren<LODGroup>());
 
 			var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
 			if (lodGroup != null)
@@ -91,28 +75,30 @@ namespace Unity.GPUAnimation
 				{
 					foreach (var r in lod.renderers)
 					{
-						var skin = r as SkinnedMeshRenderer;
+						var skin = baker.Reference(r) as SkinnedMeshRenderer;
 						if (Validate(skin, characterRig))
 							skinnedMeshRenderers.Add(skin);
-						Depend(system, r, characterRig);
 					}
 				}
 			}
 			else
 			{
+				//@TODO: Missing Baker.GetComponentInChildren (This is an incorrect dependency setup)
 				var components = characterRig.GetComponentsInChildren<SkinnedMeshRenderer>();
 				foreach (var skin in components)
 				{
+					baker.Reference(skin);
+					
 					if (Validate(skin, characterRig))
 						skinnedMeshRenderers.Add(skin);
-					
-					Depend(system, skin, characterRig);
 				}
 			}
 
-			foreach(var clip in clips)
-				system.DeclareAssetDependency(characterRig, clip);
-
+			foreach (var clip in clips)
+				baker.Reference(clip);
+			foreach (var skin in skinnedMeshRenderers)
+				baker.Reference(skin.sharedMesh);
+			
 			if (skinnedMeshRenderers.Count == 0)
 			{
 				Debug.LogWarning("No SkinnedMeshRenderers were available to be baked", characterRig);
@@ -124,10 +110,10 @@ namespace Unity.GPUAnimation
 
 			var animState = default(GPUAnimationState);
 			animState.AnimationClipSet = CreateClipSet(bakedData);
-			manager.AddComponentData(entity, animState);
-			manager.AddComponentData(entity, default(AnimationTextureCoordinate));
+			baker.AddComponent(entity, animState);
+			baker.AddComponent(entity, default(AnimationTextureCoordinate));
 			
-			manager.AddComponentData(entity, new ForceIncludeAnimationTextures
+			baker.AddComponentObject(entity, new ForceIncludeAnimationTextures
 			{
 				Textures = bakedData.AnimationTextures
 			});
@@ -140,7 +126,7 @@ namespace Unity.GPUAnimation
 				var srcMaterials = skinRenderer.sharedMaterials;
 				for (int m = 0;m != srcMaterials.Length;m++)
 				{
-					var srcMaterial = srcMaterials[m];
+					var srcMaterial = baker.Reference(srcMaterials[m]);
 					
 					if (!materials.TryGetValue(srcMaterial, out var material))
 					{
@@ -151,32 +137,34 @@ namespace Unity.GPUAnimation
 			            materials.Add(srcMaterial, material);
 					}
 					
-					var skinEntity = system.CreateAdditionalEntity(skinRenderer.gameObject, TransformUsageFlags.ManualOverride);
-					manager.AddComponentData(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
-					manager.AddComponentData(skinEntity, default(AnimationTextureCoordinate));
+					var skinEntity = baker.CreateAdditionalEntity(skinRenderer, TransformUsageFlags.ManualOverride);
+					
+					//@TODO: LinkedEntityGroup is not constructed automatically during baking yet thus we build one manually.
+					hack.Add(skinEntity);
+					
+					baker.AddComponent(skinEntity, new CopyAnimationTextureCoordinate { SourceEntity = entity });
+					baker.AddComponent(skinEntity, default(AnimationTextureCoordinate));
 					
 					// The Skin mesh renderer got baked into a space relative to rig root game object.
-					TransformAspect.AddComponents(manager, skinEntity, entity);
-	                manager.AddComponentData(skinEntity, new LocalToWorld { Value = characterRig.transform.localToWorldMatrix });
+					
+					//@TODO: Would really like to use a higher level TransformAspect utility method to add the right transform components
+					//TransformAspect.AddComponents(manager, skinEntity, entity);
+	                baker.AddComponent(skinEntity, new LocalToWorld { Value = characterRig.transform.localToWorldMatrix });
+	                baker.AddComponent(skinEntity, new Translation { Value = float3.zero });
+	                baker.AddComponent(skinEntity, new Rotation() { Value = quaternion.identity });
+	                baker.AddComponent(skinEntity, new Parent() { Value = entity });
+	                baker.AddComponent(skinEntity, new LocalToParent() { Value = float4x4.identity });
 
-	                //@TODO: Dependency on the mesh
-	                var renderMesh = new RenderMesh
-	                {
-		                mesh = bakedData.BakedMeshes[i],
-		                material = material,
-		                layer = skinRenderer.gameObject.layer,
-		                subMesh = m,
-		                receiveShadows = skinRenderer.receiveShadows,
-		                castShadows = skinRenderer.shadowCastingMode,
-		                needMotionVectorPass = MeshRendererAspect.CalculagteNeedMotionVectorPass(skinRenderer.motionVectorGenerationMode)
-	                };
-
-	                MeshRendererAspect.AddComponents(manager, skinEntity, renderMesh, skinRenderer.lightProbeUsage, skinRenderer.renderingLayerMask);
-					system.ConfigureEditorRenderData(skinEntity, skinRenderer.gameObject, true);
+	                var desc = new RenderMeshDescription(bakedData.BakedMeshes[i], material, skinRenderer.shadowCastingMode, skinRenderer.receiveShadows, skinRenderer.motionVectorGenerationMode, skinRenderer.gameObject.layer, m, skinRenderer.renderingLayerMask);
+	                MeshRendererBaker.AddRendererComponents(baker, skinEntity, desc);
+	                
+					baker.ConfigureEditorRenderData(skinEntity, skinRenderer.gameObject, true);
 	            
+					// Our GPU renderer is relative to root transform now.
+					// So we need to transform the bounding volume into root transform space.
 					var transform = characterRig.transform.worldToLocalMatrix * skinRenderer.rootBone.transform.localToWorldMatrix;
 					var aabb = AABB.Transform(transform, skinRenderer.localBounds.ToAABB());
-					manager.SetComponentData(skinEntity, new RenderBounds() { Value = aabb });
+					baker.SetComponent(skinEntity, new RenderBounds() { Value = aabb });
 				}
             }
 		}
@@ -187,26 +175,20 @@ namespace Unity.GPUAnimation
 		public float Framerate = 60.0F;
     }
 
-    [UpdateInGroup(typeof(GameObjectBeforeConversionGroup))]
-    class ConvertToGPUCharacterSystem : GameObjectConversionSystem
+    //@TODO: If unity.animation is present, Unity.Animation will want to bake its own SkinnedMeshRenderer entities.
+    //       Thats not what we want here. The intention with the ConvertToGPUCharacter is to override all default baking behaviour and let me do my custom stuff.
+    //       For example, I don't want there to be a SkinnedMeshRenderer or general purpose animation components to be baked out.
+    //       So we need some way to declare that other bakers should be disabled when this one runs.
+    class BakeGPUCharacter : Baker<ConvertToGPUCharacter>
     {
-	   override protected void OnUpdate()
-	   {
-			// The skin mesh renderer is handled by ConvertToGPUCharacter, don't process any of them.
-			Entities.ForEach((Entity entity, SkinnedMeshRenderer renderer) =>
-			{
-				var ancestor = renderer.gameObject.GetComponentInParent<ConvertToGPUCharacter>(true);
-				if (ancestor)
-				{
-					DeclareDependency(ancestor, renderer);
-					EntityManager.RemoveComponent<SkinnedMeshRenderer>(entity);
-				}
-			});
-
-			Entities.ForEach((Entity entity, ConvertToGPUCharacter character) =>
-			{
-			    CharacterUtility.AddCharacterComponents(this, DstEntityManager, GetPrimaryEntity(character, TransformUsageFlags.ReadLocalToWorld), character.gameObject, character.Clips, character.Framerate);
-			});
+	    public override void Bake(ConvertToGPUCharacter character)
+	    {
+		    var entity = GetEntity(character, TransformUsageFlags.ReadLocalToWorld);
+		    
+		    //@TODO: LinkedEntityGroup is not constructed automatically during baking yet thus we build one manually.
+		    var buf = AddBuffer<LinkedEntityGroup>(entity);
+		    buf.Add(entity);
+		    CharacterUtility.AddCharacterComponents(this, entity, character.gameObject, character.Clips, character.Framerate, buf);
 	    }
     }
 }

@@ -9,7 +9,7 @@ namespace Unity.GPUAnimation
 {
     [ExecuteAlways]
     [UpdateInGroup(typeof(UpdatePresentationSystemGroup))]
-    public class UpdateAnimationTextureCoordinateSystem : SystemBase
+    public partial class UpdateAnimationTextureCoordinateSystem : SystemBase
     {
         protected override void OnUpdate()
         {
